@@ -5,23 +5,40 @@
   <title>MJ의 BGM 테스트</title>
 </head>
 <body>
-  <h2>이미지를 클릭하면 음악이 나와요 🎵</h2>
-<img src="https://raw.githubusercontent.com/mjcafe-code/bgm-play/main/Vacumm_tube_audio-200.jpg" 
-     id="bgmImage" style="cursor:pointer; width:300px;">
-<audio id="bgmAudio" 
-       src="https://raw.githubusercontent.com/mjcafe-code/bgm-play/main/Yuki_Kuramoto.mp3" 
-       loop></audio>
+  <h2>진공관 플레이어를 클릭하면 음악이 나와요 🎵</h2>
 
-<script>
+  <!-- 이미지 -->
+  <img src="https://raw.githubusercontent.com/mjcafe-code/bgm-play/main/Vacumm_tube_audio-200.jpg" 
+       id="bgmImage" style="cursor:pointer; width:300px;">
+
+  <!-- 오디오 -->
+  <audio id="bgmAudio" 
+         src="https://raw.githubusercontent.com/mjcafe-code/bgm-play/main/Yuki_Kuramoto.mp3" 
+         loop></audio>
+
+  <!-- 볼륨 슬라이더 -->
+  <div style="margin-top:15px;">
+    🔊 볼륨:
+    <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+  </div>
+
+  <script>
     const img = document.getElementById("bgmImage");
     const audio = document.getElementById("bgmAudio");
+    const volumeControl = document.getElementById("volumeControl");
 
+    // 이미지 클릭 → 재생/일시정지
     img.addEventListener("click", () => {
       if (audio.paused) {
         audio.play();
       } else {
         audio.pause();
       }
+    });
+
+    // 슬라이더 → 볼륨 조절
+    volumeControl.addEventListener("input", () => {
+      audio.volume = volumeControl.value;
     });
   </script>
 </body>
