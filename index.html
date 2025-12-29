@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MJ의 BGM 테스트</title>
+</head>
+<body>
+  <h2>이미지를 클릭하면 음악이 나와요 🎵</h2>
+  <img src="티스토리이미지주소" id="bgmImage" style="cursor:pointer; width:300px;">
+  <audio id="bgmAudio" src="https://docs.google.com/uc?export=download&id=1xVJgHxjVmS5DzZJmKJzkoaabBH7ZAoQn" loop></audio>
+
+  <script>
+    const img = document.getElementById("bgmImage");
+    const audio = document.getElementById("bgmAudio");
+
+    img.addEventListener("click", () => {
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    });
+  </script>
+</body>
+</html>
