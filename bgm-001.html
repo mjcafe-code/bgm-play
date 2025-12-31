@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MJ의 BGM 테스트</title>
+</head>
+<body>
+<p style="font-size:14px; color:#999999;"> 호두까기 인형을 클릭하면 음악이 나와요 🎵 </p>
+
+  <!-- 이미지 -->
+  <img src="https://raw.githubusercontent.com/mjcafe-code/bgm-play/main/nutcracker_350.pix.jpg" 
+       id="bgmImage" style="cursor:pointer; width:300px;">
+
+  <!-- 오디오 -->
+  <audio id="bgmAudio" 
+         src="https://raw.githubusercontent.com/mjcafe-code/bgm-play/main/Waltz-of-the-flowers.mp3" 
+         loop></audio>
+
+  <!-- 볼륨 슬라이더 -->
+  <div style="margin-top:15px;">
+    🔊 볼륨:
+    <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+  </div>
+
+  <script>
+    const img = document.getElementById("bgmImage");
+    const audio = document.getElementById("bgmAudio");
+    const volumeControl = document.getElementById("volumeControl");
+
+    // 이미지 클릭 → 재생/일시정지
+    img.addEventListener("click", () => {
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    });
+
+    // 슬라이더 → 볼륨 조절
+    volumeControl.addEventListener("input", () => {
+      audio.volume = volumeControl.value;
+    });
+  </script>
+</body>
+</html>
