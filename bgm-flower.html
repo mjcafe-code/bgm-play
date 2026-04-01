@@ -9,7 +9,7 @@
     text-align: center;
     margin: 0;
     padding: 40px;
-    background: transparent;
+    background: transparent; /* 투명 배경 */
   }
   #playBtn {
     background: none;
@@ -33,10 +33,18 @@
     font-size: 14px;
     color: #333;
   }
+  #trackTitle {
+    font-size: 15px;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 10px;
+  }
 </style>
 </head>
-<body style="background:transparent;">
+<body>
 
+<!-- 곡 제목 표시 -->
+<div id="trackTitle">🎼 Luigi Boccherini - Minuetto</div>
 
 <!-- 오디오 -->
 <audio id="bgm" loop>
