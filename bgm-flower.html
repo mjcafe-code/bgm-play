@@ -33,7 +33,6 @@
 <body>
 
 <audio id="bgm" loop>
-  <source src="Luigi_Boccherini-Minuetto.m4a" type="audio/mpeg">
   <source src="Luigi_Boccherini-Minuetto.mp3" type="audio/mpeg">
 </audio>
 
@@ -47,13 +46,16 @@ const label = document.getElementById('label');
 
 playBtn.addEventListener('click', () => {
   if (bgm.paused) {
-    bgm.play();
-    label.textContent = "Pause Music";
-    playBtn.textContent = "🎵"; // 재생 중 아이콘
+    bgm.play().then(() => {
+      label.textContent = "Pause Music";
+      playBtn.textContent = "🎵";
+    }).catch(err => {
+      console.error("재생 실패:", err);
+    });
   } else {
     bgm.pause();
     label.textContent = "Play Background Music";
-    playBtn.textContent = "🌸"; // 정지 시 아이콘
+    playBtn.textContent = "🌸";
   }
 });
 </script>
