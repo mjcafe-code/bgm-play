@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Background Music Player</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 40px;
+    background-color: #fffafc; /* 은은한 벚꽃 배경 */
+  }
+  #playBtn {
+    background: none;
+    border: none;
+    font-size: 28px;   /* 벚꽃 아이콘 크기 */
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    vertical-align: middle;
+  }
+  #playBtn:hover {
+    transform: scale(1.2);
+  }
+  #label {
+    font-size: 16px;
+    color: #d6336c; /* 벚꽃 느낌 나는 포인트 컬러 */
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<audio id="bgm" loop>
+  <source src="Luigi_Boccherini-Minuetto.m4a" type="audio/mpeg">
+  <source src="Luigi_Boccherini-Minuetto.mp3" type="audio/mpeg">
+</audio>
+
+<!-- 벚꽃 버튼 + 텍스트 -->
+<button id="playBtn">🌸</button>
+<span id="label">Play Background Music</span>
+
+<script>
+const bgm = document.getElementById('bgm');
+const playBtn = document.getElementById('playBtn');
+
+// iOS Safari 대응: 터치 이벤트 기반
+playBtn.addEventListener('touchstart', () => {
+  bgm.play();
+});
+
+// 안드로이드/데스크탑 대응: 클릭 이벤트
+playBtn.addEventListener('click', () => {
+  bgm.play();
+});
+</script>
+
+</body>
+</html>
