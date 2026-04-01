@@ -9,12 +9,12 @@
     text-align: center;
     margin: 0;
     padding: 40px;
-    background-color: #fffafc; /* 은은한 벚꽃 배경 */
+    background-color: #fffafc;
   }
   #playBtn {
     background: none;
     border: none;
-    font-size: 28px;   /* 벚꽃 아이콘 크기 */
+    font-size: 28px;
     cursor: pointer;
     transition: transform 0.3s ease;
     vertical-align: middle;
@@ -24,7 +24,7 @@
   }
   #label {
     font-size: 16px;
-    color: #d6336c; /* 벚꽃 느낌 나는 포인트 컬러 */
+    color: #d6336c;
     margin-left: 8px;
     vertical-align: middle;
   }
@@ -37,7 +37,6 @@
   <source src="Luigi_Boccherini-Minuetto.mp3" type="audio/mpeg">
 </audio>
 
-<!-- 벚꽃 버튼 + 텍스트 -->
 <button id="playBtn">🌸</button>
 <span id="label">Play Background Music</span>
 
@@ -46,25 +45,17 @@ const bgm = document.getElementById('bgm');
 const playBtn = document.getElementById('playBtn');
 const label = document.getElementById('label');
 
-// 공통 토글 함수
-function togglePlay() {
+playBtn.addEventListener('click', () => {
   if (bgm.paused) {
-    bgm.play().then(() => {
-      label.textContent = "Pause Music";
-    }).catch(err => {
-      console.log("재생 실패:", err);
-    });
+    bgm.play();
+    label.textContent = "Pause Music";
+    playBtn.textContent = "🎵"; // 재생 중 아이콘
   } else {
     bgm.pause();
     label.textContent = "Play Background Music";
+    playBtn.textContent = "🌸"; // 정지 시 아이콘
   }
-}
-
-// iOS Safari 대응: 터치 이벤트
-playBtn.addEventListener('touchstart', togglePlay);
-
-// 안드로이드/데스크탑 대응: 클릭 이벤트
-playBtn.addEventListener('click', togglePlay);
+});
 </script>
 
 </body>
