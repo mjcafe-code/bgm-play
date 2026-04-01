@@ -46,25 +46,25 @@ const bgm = document.getElementById('bgm');
 const playBtn = document.getElementById('playBtn');
 const label = document.getElementById('label');
 
-let isPlaying = false;
+// 공통 토글 함수
+function togglePlay() {
+  if (bgm.paused) {
+    bgm.play().then(() => {
+      label.textContent = "Pause Music";
+    }).catch(err => {
+      console.log("재생 실패:", err);
+    });
+  } else {
+    bgm.pause();
+    label.textContent = "Play Background Music";
+  }
+}
 
-// iOS Safari 대응: 터치 이벤트 기반
+// iOS Safari 대응: 터치 이벤트
 playBtn.addEventListener('touchstart', togglePlay);
 
 // 안드로이드/데스크탑 대응: 클릭 이벤트
 playBtn.addEventListener('click', togglePlay);
-
-function togglePlay() {
-  if (isPlaying) {
-    bgm.pause();
-    isPlaying = false;
-    label.textContent = "Play Background Music";
-  } else {
-    bgm.play();
-    isPlaying = true;
-    label.textContent = "Pause Music";
-  }
-}
 </script>
 
 </body>
