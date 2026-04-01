@@ -44,16 +44,27 @@
 <script>
 const bgm = document.getElementById('bgm');
 const playBtn = document.getElementById('playBtn');
+const label = document.getElementById('label');
+
+let isPlaying = false;
 
 // iOS Safari 대응: 터치 이벤트 기반
-playBtn.addEventListener('touchstart', () => {
-  bgm.play();
-});
+playBtn.addEventListener('touchstart', togglePlay);
 
 // 안드로이드/데스크탑 대응: 클릭 이벤트
-playBtn.addEventListener('click', () => {
-  bgm.play();
-});
+playBtn.addEventListener('click', togglePlay);
+
+function togglePlay() {
+  if (isPlaying) {
+    bgm.pause();
+    isPlaying = false;
+    label.textContent = "Play Background Music";
+  } else {
+    bgm.play();
+    isPlaying = true;
+    label.textContent = "Pause Music";
+  }
+}
 </script>
 
 </body>
