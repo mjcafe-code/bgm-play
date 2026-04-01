@@ -32,30 +32,30 @@
 </head>
 <body>
 
+<!-- 오디오 -->
 <audio id="bgm" loop>
   <source src="Luigi_Boccherini-Minuetto.mp3" type="audio/mpeg">
 </audio>
 
+<!-- 벚꽃 버튼 + 텍스트 -->
 <button id="playBtn">🌸</button>
 <span id="label">Play Background Music</span>
 
 <script>
-const bgm = document.getElementById('bgm');
-const playBtn = document.getElementById('playBtn');
-const label = document.getElementById('label');
+const bgm = document.getElementById("bgm");
+const playBtn = document.getElementById("playBtn");
+const label = document.getElementById("label");
 
-playBtn.addEventListener('click', () => {
+// 버튼 클릭 → 재생/일시정지
+playBtn.addEventListener("click", () => {
   if (bgm.paused) {
-    bgm.play().then(() => {
-      label.textContent = "Pause Music";
-      playBtn.textContent = "🎵";
-    }).catch(err => {
-      console.error("재생 실패:", err);
-    });
+    bgm.play();
+    label.textContent = "Pause Music";
+    playBtn.textContent = "🎵"; // 재생 중 아이콘
   } else {
     bgm.pause();
     label.textContent = "Play Background Music";
-    playBtn.textContent = "🌸";
+    playBtn.textContent = "🌸"; // 정지 시 아이콘
   }
 });
 </script>
