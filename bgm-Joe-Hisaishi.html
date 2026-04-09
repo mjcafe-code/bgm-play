@@ -11,6 +11,7 @@
     padding: 10px;
     background: transparent; /* 투명 배경 */
   }
+
   #playBtn {
     background: none;
     border: none;
@@ -18,26 +19,42 @@
     cursor: pointer;
     transition: transform 0.3s ease;
     vertical-align: middle;
+    position: relative;
+    z-index: 1000;          /* 버튼을 최상위로 */
+    pointer-events: auto;   /* 터치 이벤트 허용 */
   }
+
   #playBtn:hover {
     transform: scale(1.2);
   }
+
   #label {
     font-size: 16px;
     color: #d6336c;
     margin-left: 8px;
     vertical-align: middle;
+    position: relative;
+    z-index: 1000;          /* 라벨도 최상위로 */
+    pointer-events: auto;   /* 터치 이벤트 허용 */
   }
+
   .control {
     margin-top: 15px;
     font-size: 14px;
     color: #333;
+    position: relative;
+    z-index: 1000;          /* 컨트롤도 터치 가능하게 */
+    pointer-events: auto;
   }
+
   #trackTitle {
     font-size: 15px;
     font-weight: bold;
     color: #444;
     margin-bottom: 10px;
+    position: relative;
+    z-index: 1000;
+    pointer-events: auto;
   }
 </style>
 </head>
@@ -49,21 +66,18 @@
 </div>
 
 <!-- 곡 제목 표시 -->
-<div id="trackTitle" 
-     style="font-size:16px; font-weight:bold; color:#000; margin-bottom:10px !important;">
+<div id="trackTitle">
   🎼 Joe Hisaishi<br>
   – One Summer’s Day
 </div>
-
 
 <!-- 오디오 -->
 <audio id="bgm" loop>
   <source src="Joe_Hisaishi_One_Summers_Day_EN.opus" type="audio/ogg; codecs=opus">
   <source src="Joe_Hisaishi_One_Summers_Day_EN.mp3" type="audio/mpeg">
-  <!-- 브라우저가 지원하지 않을 경우 -->
   Your browser does not support the audio element.
 </audio>  
-  
+
 <!-- 벚꽃 버튼 + 텍스트 -->
 <button id="playBtn">🌸</button>
 <span id="label">Play Background Music</span>
