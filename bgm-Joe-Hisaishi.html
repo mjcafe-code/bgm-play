@@ -58,10 +58,12 @@
 
 <!-- 오디오 -->
 <audio id="bgm" loop>
-  <source src="Joe Hisaishi - One Summer’s Day (EN Version).opus" type="audio/mp4">
-  <source src="Joe Hisaishi - One Summer’s Day (EN Version).mp3" type="audio/mpeg">
-</audio>
-
+  <source src="Joe_Hisaishi_One_Summers_Day_EN.opus" type="audio/ogg; codecs=opus">
+  <source src="Joe_Hisaishi_One_Summers_Day_EN.mp3" type="audio/mpeg">
+  <!-- 브라우저가 지원하지 않을 경우 -->
+  Your browser does not support the audio element.
+</audio>  
+  
 <!-- 벚꽃 버튼 + 텍스트 -->
 <button id="playBtn">🌸</button>
 <span id="label">Play Background Music</span>
