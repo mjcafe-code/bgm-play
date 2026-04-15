@@ -61,7 +61,7 @@
 <body>
 <!-- 연주자 이미지 -->
 <div style="margin-bottom:20px;">
-  <img src="piano-girl.png" alt="파이니스트" 
+  <img src="piano-boy.png" alt="파이니스트" 
        style="width:180px; display:block; margin:0 auto;">
 </div>
 
