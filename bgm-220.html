@@ -66,7 +66,7 @@
 </div>
 
 <!-- 재생/일시정지 버튼 -->
-<button id="playBtn">🎶</button>
+<button id="playBtn">⏸️</button>
 <span id="label">Play Background Music</span>
 
 <!-- 볼륨 슬라이더 -->
@@ -104,20 +104,16 @@ document.querySelectorAll(".trackBtn").forEach(btn => {
   });
 });
 
-<!-- 재생/일시정지 버튼 -->
-<button id="playBtn">⏸️</button>
-<span id="label">Play Background Music</span>
-
-<script>
+// 재생/일시정지 토글
 playBtn.addEventListener("click", () => {
   if (bgm.paused) {
     bgm.play();
-    label.textContent = "Pause Music";   // 재생 중이므로 'Pause' 문구
-    playBtn.textContent = "🎶";          // 재생 아이콘
+    label.textContent = "Pause Music";
+    playBtn.textContent = "🎶"; // 재생 아이콘
   } else {
     bgm.pause();
-    label.textContent = "Play Background Music"; // 멈춘 상태이므로 'Play' 문구
-    playBtn.textContent = "⏸️";                 // 일시정지 아이콘
+    label.textContent = "Play Background Music";
+    playBtn.textContent = "⏸️"; // 일시정지 아이콘
   }
 });
 
@@ -143,4 +139,3 @@ seekBar.addEventListener("input", () => {
 
 </body>
 </html>
-
