@@ -11,21 +11,6 @@
     padding: 10px;
     background: transparent;
   }
-  #playBtn {
-    background: none;
-    border: none;
-    font-size: 28px;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    vertical-align: middle;
-  }
-  #playBtn:hover { transform: scale(1.2); }
-  #label {
-    font-size: 16px;
-    color: #d6336c;
-    margin-left: 8px;
-    vertical-align: middle;
-  }
   .control { margin-top: 15px; font-size: 14px; color: #333; }
   #trackTitle { font-size: 15px; font-weight: bold; color: #444; margin-bottom: 10px; }
   .trackBtn {
@@ -65,10 +50,6 @@
           data-src="Morricone_The_Mission_(Gabriel's_Oboe).m4a">🌻 Gabriel's Oboe</button>
 </div>
 
-<!-- 재생/일시정지 버튼 -->
-<button id="playBtn">🎶</button>
-<span id="label">Play Background Music</span>
-
 <!-- 볼륨 슬라이더 -->
 <div class="control">
   🔊 볼륨:
@@ -83,15 +64,9 @@
 
 <script>
 const bgm = document.getElementById("bgm");
-const playBtn = document.getElementById("playBtn");
-const label = document.getElementById("label");
 const volumeControl = document.getElementById("volumeControl");
 const seekBar = document.getElementById("seekBar");
 const trackTitle = document.getElementById("trackTitle");
-
-// 초기 상태: 🎶 Play Background Music
-playBtn.textContent = "🎶";
-label.textContent = "Play Background Music";
 
 // 곡 선택 버튼 이벤트
 document.querySelectorAll(".trackBtn").forEach(btn => {
@@ -101,24 +76,8 @@ document.querySelectorAll(".trackBtn").forEach(btn => {
 
     bgm.src = src;
     trackTitle.textContent = "🎼 " + title;
-    bgm.play().then(() => {
-      label.textContent = "Pause Music";
-      playBtn.textContent = "⏸️"; // 재생 중 → ⏸️
-    }).catch(err => console.error("재생 실패:", err));
+    bgm.play().catch(err => console.error("재생 실패:", err));
   });
-});
-
-// 재생/일시정지 토글
-playBtn.addEventListener("click", () => {
-  if (bgm.paused) {
-    bgm.play();
-    label.textContent = "Pause Music";
-    playBtn.textContent = "⏸️"; // 재생 중 → ⏸️
-  } else {
-    bgm.pause();
-    label.textContent = "Play Background Music";
-    playBtn.textContent = "🎶"; // 일시정지 → 🎶
-  }
 });
 
 // 볼륨 조절
