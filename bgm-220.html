@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Background Music Player</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+    background: transparent;
+  }
+  #playBtn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    vertical-align: middle;
+  }
+  #playBtn:hover { transform: scale(1.2); }
+  #label {
+    font-size: 16px;
+    color: #d6336c;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .control { margin-top: 15px; font-size: 14px; color: #333; }
+  #trackTitle { font-size: 15px; font-weight: bold; color: #444; margin-bottom: 10px; }
+  .trackBtn {
+    margin: 5px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #f9f9f9;
+  }
+  .trackBtn:hover { background: #e6f0ff; }
+</style>
+</head>
+<body>
+
+<!-- 연주자 이미지 -->
+<div style="margin-bottom:20px;">
+  <img src="violinist_pianist.png" alt="바이올리스트-피아니스트" 
+       style="width:180px; display:block; margin:0 auto;">
+</div>
+
+<!-- 곡 제목 표시 -->
+<div id="trackTitle">🎼 곡을 선택하세요</div>
+
+<!-- 오디오 -->
+<audio id="bgm" loop></audio>
+
+<!-- 곡 선택 버튼 -->
+<div>
+  <button class="trackBtn" 
+          data-title="Yo-Yo Ma & Kathryn Stott - Ave Maria"
+          data-src="Yo-Yo_Ma--Kathryn_Stott-Ave_Maria.m4a">🌸 Ave Maria</button>
+
+  <button class="trackBtn" 
+          data-title="Morricone - The Mission (Gabriel's Oboe)"
+          data-src="Morricone_The_Mission_(Gabriel's Oboe).m4a">🌻 Gabriel's Oboe</button>
+</div>
+
+<!-- 재생/일시정지 버튼 -->
+<button id="playBtn">🎶</button>
+<span id="label">Play Background Music</span>
+
+<!-- 볼륨 슬라이더 -->
+<div class="control">
+  🔊 볼륨:
+  <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+</div>
+
+<!-- 시크바 -->
+<div class="control">
+  ⏱️ 재생 위치:
+  <input type="range" id="seekBar" min="0" max="100" step="1" value="0">
+</div>
+
+<script>
+const bgm = document.getElementById("bgm");
+const playBtn = document.getElementById("playBtn");
+const label = document.getElementById("label");
+const volumeControl = document.getElementById("volumeControl");
+const seekBar = document.getElementById("seekBar");
+const trackTitle = document.getElementById("trackTitle");
+
+// 곡 선택 버튼 이벤트
+document.querySelectorAll(".trackBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const src = btn.getAttribute("data-src");
+    const title = btn.getAttribute("data-title");
+
+    bgm.src = src;
+    trackTitle.textContent = "🎼 " + title;
+    bgm.play().then(() => {
+      label.textContent = "Pause Music";
+      playBtn.textContent = "🎶"; // 재생 아이콘
+    }).catch(err => console.error("재생 실패:", err));
+  });
+});
+
+// 재생/일시정지 토글
+playBtn.addEventListener("click", () => {
+  if (bgm.paused) {
+    bgm.play();
+    label.textContent = "Pause Music";
+    playBtn.textContent = "🎶"; // 재생 아이콘
+  } else {
+    bgm.pause();
+    label.textContent = "Play Background Music";
+    playBtn.textContent = "⏸️"; // 일시정지 아이콘
+  }
+});
+
+// 볼륨 조절
+volumeControl.addEventListener("input", () => {
+  bgm.volume = volumeControl.value;
+});
+
+// 시크바 업데이트
+bgm.addEventListener("timeupdate", () => {
+  if (bgm.duration) {
+    const progress = (bgm.currentTime / bgm.duration) * 100;
+    seekBar.value = progress;
+  }
+});
+
+// 시크바 이동
+seekBar.addEventListener("input", () => {
+  const newTime = (seekBar.value / 100) * bgm.duration;
+  bgm.currentTime = newTime;
+});
+</script>
+
+</body>
+</html>
+
