@@ -62,7 +62,7 @@
 
   <button class="trackBtn" 
           data-title="Morricone - The Mission (Gabriel's Oboe)"
-          data-src="Morricone_The_Mission_(Gabriel's Oboe).m4a">🌻 Gabriel's Oboe</button>
+          data-src="Morricone_The_Mission_(Gabriel's_Oboe).m4a">🌻 Gabriel's Oboe</button>
 </div>
 
 <!-- 재생/일시정지 버튼 -->
@@ -113,11 +113,11 @@ playBtn.addEventListener("click", () => {
   if (bgm.paused) {
     bgm.play();
     label.textContent = "Pause Music";
-    playBtn.textContent = "🎶"; // 재생 중 → ⏸️
+    playBtn.textContent = "⏸️"; // 재생 중 → ⏸️
   } else {
     bgm.pause();
     label.textContent = "Play Background Music";
-    playBtn.textContent = "⏸️"; // 일시정지 → 🎶
+    playBtn.textContent = "🎶"; // 일시정지 → 🎶
   }
 });
 
