@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Background Music Player</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+    background: transparent; /* 투명 배경 */
+  }
+
+  #playBtn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    vertical-align: middle;
+    position: relative;
+    z-index: 1000;          /* 버튼을 최상위로 */
+    pointer-events: auto;   /* 터치 이벤트 허용 */
+  }
+
+  #playBtn:hover {
+    transform: scale(1.2);
+  }
+
+  #label {
+    font-size: 16px;
+    color: #d6336c;
+    margin-left: 8px;
+    vertical-align: middle;
+    position: relative;
+    z-index: 1000;          /* 라벨도 최상위로 */
+    pointer-events: auto;   /* 터치 이벤트 허용 */
+  }
+
+  .control {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #333;
+    position: relative;
+    z-index: 1000;          /* 컨트롤도 터치 가능하게 */
+    pointer-events: auto;
+  }
+
+  #trackTitle {
+    font-size: 15px;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 1000;
+    pointer-events: auto;
+  }
+</style>
+</head>
+<body>
+<!-- 연주자 이미지 -->
+<div style="margin-bottom:20px;">
+  <img src="piano-boy.png" alt="파이니스트" 
+       style="width:180px; display:block; margin:0 auto;">
+</div>
+
+<!-- 곡 제목 표시 -->
+<div id="trackTitle">
+  🎼 Joe Hisaishi<br>
+  – One Summer’s Day
+</div>
+
+<!-- 오디오 -->
+<audio id="bgm" loop>
+  <source src="Yiruma-River_Flows_in_You.opus" type="audio/ogg; codecs=opus">
+  <source src="Yiruma-River_Flows_in_You.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>  
+
+<!-- 벚꽃 버튼 + 텍스트 -->
+<button id="playBtn">🌸</button>
+<span id="label">Play Background Music</span>
+
+<!-- 볼륨 슬라이더 -->
+<div class="control">
+  🔊 볼륨:
+  <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+</div>
+
+<!-- 시크바 -->
+<div class="control">
+  ⏱️ 재생 위치:
+  <input type="range" id="seekBar" min="0" max="100" step="1" value="0">
+</div>
+
+<script>
+const bgm = document.getElementById("bgm");
+const playBtn = document.getElementById("playBtn");
+const label = document.getElementById("label");
+const volumeControl = document.getElementById("volumeControl");
+const seekBar = document.getElementById("seekBar");
+
+// 버튼 클릭 → 재생/일시정지 토글
+playBtn.addEventListener("click", () => {
+  if (bgm.paused) {
+    bgm.play().then(() => {
+      label.textContent = "Pause Music";
+      playBtn.textContent = "🎵";
+    }).catch(err => {
+      console.error("재생 실패:", err);
+    });
+  } else {
+    bgm.pause();
+    label.textContent = "Play Background Music";
+    playBtn.textContent = "🌸";
+  }
+});
+
+// 볼륨 조절
+volumeControl.addEventListener("input", () => {
+  bgm.volume = volumeControl.value;
+});
+
+// 시크바 업데이트 (재생 중 위치 반영)
+bgm.addEventListener("timeupdate", () => {
+  const progress = (bgm.currentTime / bgm.duration) * 100;
+  seekBar.value = progress;
+});
+
+// 시크바 이동 → 재생 위치 변경
+seekBar.addEventListener("input", () => {
+  const newTime = (seekBar.value / 100) * bgm.duration;
+  bgm.currentTime = newTime;
+});
+</script>
+
+</body>
+</html>
