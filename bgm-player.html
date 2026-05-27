@@ -291,7 +291,7 @@ playBtn.addEventListener('click', function () {
   } else {
     bgm.pause();
     label.textContent   = 'Play Background Music';
-    playBtn.textContent = '🌸';
+    playBtn.textContent = '☕';
   }
 });
 volumeControl.addEventListener('input', function () { bgm.volume = this.value; });
@@ -303,9 +303,9 @@ seekBar.addEventListener('input', function () {
 var panelOpen = false;
 
 function setMobPlayState(playing) {
-  mobPlayBtn.textContent = playing ? '🎵' : '🌸';
+  mobPlayBtn.textContent = playing ? '🎵' : '☕';
   mobLabel.textContent   = playing ? '일시정지' : '재생';
-  mobToggle.textContent  = playing ? '🎵' : '🌸';
+  mobToggle.textContent  = playing ? '🎵' : '☕';
 }
 
 mobToggle.addEventListener('click', function () {
