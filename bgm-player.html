@@ -219,13 +219,16 @@
    URL 파라미터 파싱 — | 구분자 방식
    티스토리 에디터가 &를 &amp;로 자동 변환하는 문제를 방지하기 위해
    파라미터를 | 하나로 묶어서 전달합니다.
+   
    사용법:
    bgm-player.html?data=파일명|곡제목|이미지URL
+   
    · 1번째(src)   : 음악 파일명 또는 URL (필수)
    · 2번째(title) : 플레이어에 표시될 곡 제목 (선택, 기본값: "Background Music")
                     슬래시( / )로 줄바꿈 가능 — 예: The Swan / Saint-Saëns
    · 3번째(img)   : 이미지 전체 URL (선택, 기본값: violin-girl.png)
                     PC 플레이어 + 모바일 패널 양쪽에 표시됩니다.
+                    
    ※ URL 공백 문제 방지:
       URLSearchParams 대신 href에서 직접 뽑아
       공백·특수문자가 있어도 파싱이 잘리지 않습니다.
