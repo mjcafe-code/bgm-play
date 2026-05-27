@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BGM Player</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+    background: transparent;
+  }
+  #playBtn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    vertical-align: middle;
+  }
+  #playBtn:hover { transform: scale(1.2); }
+  #label {
+    font-size: 16px;
+    color: #d6336c;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .control {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #333;
+  }
+  #trackTitle {
+    font-size: 15px;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 10px;
+  }
+
+  /* ── 모바일 전용 (767px 이하) ── */
+  @media (max-width: 767px) {
+    body { padding: 0; background: transparent; }
+    #pc-player { display: none !important; }
+
+    #mob-toggle {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(214,51,108,0.3);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      font-size: 22px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 9998;
+      transition: transform 0.2s;
+    }
+    #mob-toggle:active { transform: scale(0.92); }
+
+    #mob-panel {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(255,255,255,0.92);
+      border-top: 1px solid rgba(214,51,108,0.2);
+      border-radius: 14px 14px 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 14px 20px 24px;
+      z-index: 9997;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    }
+    #mob-panel.open { transform: translateY(0); }
+
+    #mob-handle {
+      width: 36px; height: 4px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 2px;
+      margin: 0 auto 12px;
+    }
+    #mob-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 10px;
+    }
+    .mob-ctrl-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #555;
+    }
+    .mob-ctrl-row input[type=range] {
+      flex: 1; height: 3px;
+      accent-color: #d6336c;
+    }
+    #mob-play-btn {
+      background: none;
+      border: 1px solid rgba(214,51,108,0.4);
+      border-radius: 50%;
+      width: 38px; height: 38px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+  }
+
+  @media (min-width: 768px) {
+    #mob-toggle, #mob-panel { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── PC 플레이어 ── -->
+<div id="pc-player">
+  <div style="margin-bottom:20px;">
+    <img id="pc-img" src="" alt="플레이어 이미지"
+         style="width:180px; display:block; margin:0 auto;">
+  </div>
+  <div id="trackTitle"
+       style="font-size:16px; font-weight:bold; color:#000; margin-bottom:10px !important;">
+  </div>
+  <button id="playBtn">🌸</button>
+  <span id="label">Play Background Music</span>
+  <div class="control">
+    🔊 볼륨:
+    <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+  </div>
+  <div class="control">
+    ⏱️ 재생 위치:
+    <input type="range" id="seekBar" min="0" max="100" step="1" value="0">
+  </div>
+</div>
+
+<!-- ── 모바일: 플로팅 버튼 ── -->
+<button id="mob-toggle" aria-label="음악 플레이어 열기">🌸</button>
+
+<!-- ── 모바일: 슬라이드 업 패널 ── -->
+<div id="mob-panel">
+  <div id="mob-handle"></div>
+  <div id="mob-title"></div>
+  <div class="mob-ctrl-row">
+    <button id="mob-play-btn">🌸</button>
+    <span id="mob-label" style="font-size:12px; color:#d6336c; flex-shrink:0;">재생</span>
+  </div>
+  <div class="mob-ctrl-row">
+    🔊
+    <input type="range" id="mob-vol" min="0" max="1" step="0.1" value="0.5">
+  </div>
+  <div class="mob-ctrl-row">
+    ⏱️
+    <input type="range" id="mob-seek" min="0" max="100" step="1" value="0">
+  </div>
+</div>
+
+<!-- 오디오 -->
+<audio id="bgm" loop></audio>
+
+<script>
+/* ════════════════════════════════════
+   URL 파라미터 파싱 — | 구분자 방식
+   티스토리 에디터가 &를 &amp;로 자동 변환하는 문제를 방지하기 위해
+   파라미터를 | 하나로 묶어서 전달합니다.
+
+   사용법:
+   bgm-player.html?data=파일명|곡제목|이미지파일명
+
+   · 1번째(src)   : 음악 파일명 또는 URL (필수)
+   · 2번째(title) : 플레이어에 표시될 곡 제목 (선택, 기본값: "Background Music")
+                    슬래시( / )로 줄바꿈 가능 — 예: The Swan / Saint-Saëns
+   · 3번째(img)   : PC 플레이어 이미지 파일명 또는 URL (선택, 기본값: violin-girl.png)
+
+   예시:
+   ?data=Yo-Yo_Ma.m4a|The Swan|YYM-w600.png
+   ════════════════════════════════════ */
+var params    = new URLSearchParams(window.location.search);
+var dataParam = params.get('data') || '';
+var parts     = dataParam.split('|');
+var srcUrl    = (parts[0] || '').trim();
+var titleText = (parts[1] || 'Background Music').trim();
+var imgUrl    = (parts[2] || 'violin-girl.png').trim();
+
+/* DOM에 파라미터 적용 */
+var bgm = document.getElementById('bgm');
+if (srcUrl) bgm.src = srcUrl;
+
+document.getElementById('trackTitle').innerHTML = titleText.replace(' / ', '<br>');
+document.getElementById('mob-title').textContent = '🎼 ' + titleText;
+document.getElementById('pc-img').src = imgUrl;
+
+/* ── PC 컨트롤 ── */
+var playBtn       = document.getElementById('playBtn');
+var label         = document.getElementById('label');
+var volumeControl = document.getElementById('volumeControl');
+var seekBar       = document.getElementById('seekBar');
+
+playBtn.addEventListener('click', function() {
+  if (bgm.paused) {
+    bgm.play().then(function() {
+      label.textContent = 'Pause Music';
+      playBtn.textContent = '🎵';
+    }).catch(function(e) { console.error(e); });
+  } else {
+    bgm.pause();
+    label.textContent = 'Play Background Music';
+    playBtn.textContent = '🌸';
+  }
+});
+volumeControl.addEventListener('input', function() { bgm.volume = this.value; });
+bgm.addEventListener('timeupdate', function() {
+  if (bgm.duration) seekBar.value = (bgm.currentTime / bgm.duration) * 100;
+});
+seekBar.addEventListener('input', function() {
+  if (bgm.duration) bgm.currentTime = (this.value / 100) * bgm.duration;
+});
+
+/* ── 모바일 컨트롤 ── */
+var mobToggle  = document.getElementById('mob-toggle');
+var mobPanel   = document.getElementById('mob-panel');
+var mobPlayBtn = document.getElementById('mob-play-btn');
+var mobLabel   = document.getElementById('mob-label');
+var mobVol     = document.getElementById('mob-vol');
+var mobSeek    = document.getElementById('mob-seek');
+var panelOpen  = false;
+
+function setMobPlayState(playing) {
+  mobPlayBtn.textContent = playing ? '🎵' : '🌸';
+  mobLabel.textContent   = playing ? '일시정지' : '재생';
+  mobToggle.textContent  = playing ? '🎵' : '🌸';
+}
+
+mobToggle.addEventListener('click', function() {
+  panelOpen = !panelOpen;
+  mobPanel.classList.toggle('open', panelOpen);
+});
+mobPlayBtn.addEventListener('click', function() {
+  if (bgm.paused) {
+    bgm.play().then(function() { setMobPlayState(true); })
+      .catch(function(e) { console.error(e); });
+  } else {
+    bgm.pause();
+    setMobPlayState(false);
+  }
+});
+mobVol.addEventListener('input', function() { bgm.volume = this.value; });
+bgm.addEventListener('timeupdate', function() {
+  if (bgm.duration) mobSeek.value = (bgm.currentTime / bgm.duration) * 100;
+});
+mobSeek.addEventListener('input', function() {
+  if (bgm.duration) bgm.currentTime = (this.value / 100) * bgm.duration;
+});
+document.addEventListener('click', function(e) {
+  if (panelOpen && !mobPanel.contains(e.target) && e.target !== mobToggle) {
+    panelOpen = false;
+    mobPanel.classList.remove('open');
+  }
+});
+</script>
+
+</body>
+</html>
