@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BGM Player v5</title>
+<title>BGM Player</title>
 <style>
   /* ── 기본 리셋 ── */
   *, *::before, *::after { box-sizing: border-box; }
@@ -260,7 +260,7 @@ var mobImgWrap    = document.getElementById('mob-img-wrap');
 
 /* ── 파라미터 적용 ── */
 if (srcUrl) bgm.src = srcUrl;
-document.getElementById('trackTitle').innerHTML = titleText.replace(' / ', '<br>');
+document.getElementById('trackTitle').innerHTML = titleText.replace(/\s*\/\s*/g, '<br>');
 document.getElementById('mob-title').textContent = '🎼 ' + titleText;
 document.getElementById('pc-img').src = imgUrl;
 mobImg.src = imgUrl;
@@ -269,7 +269,7 @@ mobImg.src = imgUrl;
    iframe 내부에서 CSS viewport 인식 오류를 방지하기 위해
    window.innerWidth를 직접 읽어 body.mobile 클래스로 전환합니다. */
 function checkMobile() {
-  if (window.innerWidth <= 400) {
+  if (window.screen.width <= 768) {
     document.body.classList.add('mobile');
   } else {
     document.body.classList.remove('mobile');
@@ -291,7 +291,7 @@ playBtn.addEventListener('click', function () {
   } else {
     bgm.pause();
     label.textContent   = 'Play Background Music';
-    playBtn.textContent = '☕';
+    playBtn.textContent = '🌸';
   }
 });
 volumeControl.addEventListener('input', function () { bgm.volume = this.value; });
@@ -303,9 +303,9 @@ seekBar.addEventListener('input', function () {
 var panelOpen = false;
 
 function setMobPlayState(playing) {
-  mobPlayBtn.textContent = playing ? '🎵' : '☕';
+  mobPlayBtn.textContent = playing ? '🎵' : '🌸';
   mobLabel.textContent   = playing ? '일시정지' : '재생';
-  mobToggle.textContent  = playing ? '🎵' : '☕';
+  mobToggle.textContent  = playing ? '🎵' : '🌸';
 }
 
 mobToggle.addEventListener('click', function () {
