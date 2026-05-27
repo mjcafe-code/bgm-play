@@ -18,9 +18,7 @@
   /* ════════════════════════════════
      PC 플레이어
   ════════════════════════════════ */
-  #pc-player {
-    display: block;
-  }
+  #pc-player { display: block; }
   #pc-img {
     width: 180px;
     display: block;
@@ -52,27 +50,16 @@
     font-size: 14px;
     color: #333;
   }
-  .control input[type=range] {
-    accent-color: #d6336c;
-<<<<<<< patch-1
-  }
+  .control input[type=range] { accent-color: #d6336c; }
 
   /* ════════════════════════════════
      모바일 전용 — body.mobile 클래스로 토글
   ════════════════════════════════ */
 
-  /* PC 플레이어 숨기기 */
-  body.mobile #pc-player {
-    display: none !important;
-  }
+  body.mobile #pc-player { display: none !important; }
 
-  /* 모바일 기본: 숨김 */
-  #mob-toggle,
-  #mob-panel {
-    display: none;
-  }
+  #mob-toggle, #mob-panel { display: none; }
 
-  /* 모바일 활성화 시: 표시 */
   body.mobile #mob-toggle {
     display: flex;
     position: fixed;
@@ -81,9 +68,9 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(214, 51, 108, 0.3);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(214,51,108,0.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     font-size: 22px;
     cursor: pointer;
     align-items: center;
@@ -101,125 +88,33 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.92);
-    border-top: 1px solid rgba(214, 51, 108, 0.2);
+    background: rgba(255,255,255,0.92);
+    border-top: 1px solid rgba(214,51,108,0.2);
     border-radius: 14px 14px 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     padding: 14px 20px 24px;
     z-index: 9997;
     transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(.4, 0, .2, 1);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
   }
-  body.mobile #mob-panel.open {
-    transform: translateY(0);
-  }
+  body.mobile #mob-panel.open { transform: translateY(0); }
 
-  /* 패널 내부 요소 */
   #mob-handle {
     width: 36px;
     height: 4px;
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0,0,0,0.15);
     border-radius: 2px;
     margin: 0 auto 12px;
   }
-
-  /* 모바일 이미지 */
-  #mob-img-wrap {
-    margin-bottom: 10px;
-  }
-  #mob-img {
-    height: 80px;
-    width: auto;
-    object-fit: contain;
-    display: inline-block;
-=======
-  }
-
-  /* ════════════════════════════════
-     모바일 전용 — body.mobile 클래스로 토글
-  ════════════════════════════════ */
-
-  /* PC 플레이어 숨기기 */
-  body.mobile #pc-player {
-    display: none !important;
-  }
-
-  /* 모바일 기본: 숨김 */
-  #mob-toggle,
-  #mob-panel {
-    display: none;
-  }
-
-  /* 모바일 활성화 시: 표시 */
-  body.mobile #mob-toggle {
-    display: flex;
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(214, 51, 108, 0.3);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-    font-size: 22px;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    z-index: 9998;
-    transition: transform 0.2s;
->>>>>>> main
-  }
-  body.mobile #mob-toggle:active { transform: scale(0.92); }
-
-<<<<<<< patch-1
-=======
-  body.mobile #mob-panel {
-    display: block;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(255, 255, 255, 0.92);
-    border-top: 1px solid rgba(214, 51, 108, 0.2);
-    border-radius: 14px 14px 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 14px 20px 24px;
-    z-index: 9997;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(.4, 0, .2, 1);
-  }
-  body.mobile #mob-panel.open {
-    transform: translateY(0);
-  }
-
-  /* 패널 내부 요소 */
-  #mob-handle {
-    width: 36px;
-    height: 4px;
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 2px;
-    margin: 0 auto 12px;
-  }
-
-  /* 모바일 이미지 */
-  #mob-img-wrap {
-    margin-bottom: 10px;
-  }
+  #mob-img-wrap { margin-bottom: 10px; }
   #mob-img {
     height: 80px;
     width: auto;
     object-fit: contain;
     display: inline-block;
   }
-
->>>>>>> main
   #mob-title {
     font-size: 13px;
     font-weight: bold;
@@ -241,7 +136,7 @@
   }
   #mob-play-btn {
     background: none;
-    border: 1px solid rgba(214, 51, 108, 0.4);
+    border: 1px solid rgba(214,51,108,0.4);
     border-radius: 50%;
     width: 38px;
     height: 38px;
@@ -304,7 +199,6 @@
    URL 파라미터 파싱 — | 구분자 방식
    티스토리 에디터가 &를 &amp;로 자동 변환하는 문제를 방지하기 위해
    파라미터를 | 하나로 묶어서 전달합니다.
-<<<<<<< patch-1
 
    사용법:
    bgm-player.html?data=파일명|곡제목|이미지파일명또는URL
@@ -317,18 +211,12 @@
 
    ※ 파싱 방식: href 직접 슬라이싱 후 %7C 복원 → split → 개별 decodeURIComponent
       URLSearchParams를 쓰지 않아 & 인코딩 문제에 영향받지 않습니다.
-
-   ⚠️ iOS 모바일 주소창에서 직접 URL 입력 시:
-      곡 제목 등 공백이 있으면 URL이 공백에서 잘릴 수 있습니다.
-      공백을 %20으로 인코딩해서 입력하세요. (예: The%20Swan)
-      티스토리 iframe src에 넣을 때는 공백 그대로 써도 됩니다. (자동 처리됨)
    ════════════════════════════════════ */
 
 /* ── 파라미터 파싱 (href 직접 파싱 — 공백·%7C 안전) ── */
 var _href  = window.location.href;
 var _qi    = _href.indexOf('?data=');
 var _raw   = _qi >= 0 ? _href.slice(_qi + 6) : '';
-/* %7C(인코딩된 |)를 먼저 복원한 뒤 split → 각 조각 개별 디코딩 */
 var parts  = _raw.replace(/%7C/gi, '|').split('|').map(function(s) {
   try { return decodeURIComponent(s).trim(); } catch(e) { return s.trim(); }
 });
@@ -336,35 +224,6 @@ var srcUrl    = parts[0] || '';
 var titleText = parts[1] || 'Background Music';
 var imgUrl    = parts[2] || 'violin-girl.png';
 
-=======
-   
-   사용법:
-   bgm-player.html?data=파일명|곡제목|이미지URL
-   
-   · 1번째(src)   : 음악 파일명 또는 URL (필수)
-   · 2번째(title) : 플레이어에 표시될 곡 제목 (선택, 기본값: "Background Music")
-                    슬래시( / )로 줄바꿈 가능 — 예: The Swan / Saint-Saëns
-   · 3번째(img)   : 이미지 전체 URL (선택, 기본값: violin-girl.png)
-                    PC 플레이어 + 모바일 패널 양쪽에 표시됩니다.
-                    
-   ※ URL 공백 문제 방지:
-      URLSearchParams 대신 href에서 직접 뽑아
-      공백·특수문자가 있어도 파싱이 잘리지 않습니다.
-   ════════════════════════════════════ */
-
-/* ── 파라미터 파싱 (href 직접 파싱 — 공백·%7C 안전) ── */
-var _href  = window.location.href;
-var _qi    = _href.indexOf('?data=');
-var _raw   = _qi >= 0 ? _href.slice(_qi + 6) : '';
-/* %7C(인코딩된 |)를 먼저 복원한 뒤 split → 각 조각 개별 디코딩 */
-var parts  = _raw.replace(/%7C/gi, '|').split('|').map(function(s) {
-  try { return decodeURIComponent(s).trim(); } catch(e) { return s.trim(); }
-});
-var srcUrl    = parts[0] || '';
-var titleText = parts[1] || 'Background Music';
-var imgUrl    = parts[2] || 'violin-girl.png';
-
->>>>>>> main
 /* ── DOM 참조 ── */
 var bgm           = document.getElementById('bgm');
 var playBtn       = document.getElementById('playBtn');
@@ -378,33 +237,6 @@ var mobLabel      = document.getElementById('mob-label');
 var mobVol        = document.getElementById('mob-vol');
 var mobSeek       = document.getElementById('mob-seek');
 var mobImg        = document.getElementById('mob-img');
-var mobImgWrap    = document.getElementById('mob-img-wrap');
-<<<<<<< patch-1
-
-/* ── 파라미터 적용 ── */
-if (srcUrl) bgm.src = srcUrl;
-document.getElementById('trackTitle').innerHTML = titleText.replace(' / ', '<br>');
-document.getElementById('mob-title').textContent = '🎼 ' + titleText;
-document.getElementById('pc-img').src = imgUrl;
-mobImg.src = imgUrl;
-
-/* ── 모바일 감지 (CSS 미디어 쿼리 대신 JS 사용) ──
-   iframe 내부에서 CSS viewport 인식 오류를 방지하기 위해
-   window.innerWidth를 직접 읽어 body.mobile 클래스로 전환합니다. */
-function checkMobile() {
-  if (window.innerWidth <= 400) {
-    document.body.classList.add('mobile');
-  } else {
-    document.body.classList.remove('mobile');
-    /* PC로 전환 시 패널 닫기 */
-    panelOpen = false;
-    mobPanel.classList.remove('open');
-  }
-}
-checkMobile();
-window.addEventListener('resize', checkMobile);
-
-=======
 
 /* ── 파라미터 적용 ── */
 if (srcUrl) bgm.src = srcUrl;
@@ -413,15 +245,12 @@ document.getElementById('mob-title').textContent = '🎼 ' + titleText;
 document.getElementById('pc-img').src = imgUrl;
 mobImg.src = imgUrl;
 
-/* ── 모바일 감지 (CSS 미디어 쿼리 대신 JS 사용) ──
-   iframe 내부에서 CSS viewport 인식 오류를 방지하기 위해
-   window.innerWidth를 직접 읽어 body.mobile 클래스로 전환합니다. */
+/* ── 모바일 감지 — window.screen.width 기준 (기기 실제 해상도, iframe 환경 대응) ── */
 function checkMobile() {
   if (window.screen.width <= 768) {
     document.body.classList.add('mobile');
   } else {
     document.body.classList.remove('mobile');
-    /* PC로 전환 시 패널 닫기 */
     panelOpen = false;
     mobPanel.classList.remove('open');
   }
@@ -429,54 +258,53 @@ function checkMobile() {
 checkMobile();
 window.addEventListener('resize', checkMobile);
 
->>>>>>> main
 /* ── PC 컨트롤 ── */
-playBtn.addEventListener('click', function () {
+var panelOpen = false;
+
+playBtn.addEventListener('click', function() {
   if (bgm.paused) {
-    bgm.play().then(function () {
+    bgm.play().then(function() {
       label.textContent   = 'Pause Music';
       playBtn.textContent = '🎵';
-    }).catch(function (e) { console.error(e); });
+    }).catch(function(e) { console.error(e); });
   } else {
     bgm.pause();
     label.textContent   = 'Play Background Music';
     playBtn.textContent = '🌸';
   }
 });
-volumeControl.addEventListener('input', function () { bgm.volume = this.value; });
-seekBar.addEventListener('input', function () {
+volumeControl.addEventListener('input', function() { bgm.volume = this.value; });
+seekBar.addEventListener('input', function() {
   if (bgm.duration) bgm.currentTime = (this.value / 100) * bgm.duration;
 });
 
 /* ── 모바일 컨트롤 ── */
-var panelOpen = false;
-
 function setMobPlayState(playing) {
   mobPlayBtn.textContent = playing ? '🎵' : '🌸';
   mobLabel.textContent   = playing ? '일시정지' : '재생';
   mobToggle.textContent  = playing ? '🎵' : '🌸';
 }
 
-mobToggle.addEventListener('click', function () {
+mobToggle.addEventListener('click', function() {
   panelOpen = !panelOpen;
   mobPanel.classList.toggle('open', panelOpen);
 });
-mobPlayBtn.addEventListener('click', function () {
+mobPlayBtn.addEventListener('click', function() {
   if (bgm.paused) {
-    bgm.play().then(function () { setMobPlayState(true); })
-      .catch(function (e) { console.error(e); });
+    bgm.play().then(function() { setMobPlayState(true); })
+      .catch(function(e) { console.error(e); });
   } else {
     bgm.pause();
     setMobPlayState(false);
   }
 });
-mobVol.addEventListener('input', function () { bgm.volume = this.value; });
-mobSeek.addEventListener('input', function () {
+mobVol.addEventListener('input', function() { bgm.volume = this.value; });
+mobSeek.addEventListener('input', function() {
   if (bgm.duration) bgm.currentTime = (this.value / 100) * bgm.duration;
 });
 
 /* ── 공용: 시간 업데이트 ── */
-bgm.addEventListener('timeupdate', function () {
+bgm.addEventListener('timeupdate', function() {
   if (bgm.duration) {
     var pct = (bgm.currentTime / bgm.duration) * 100;
     seekBar.value = pct;
@@ -485,7 +313,7 @@ bgm.addEventListener('timeupdate', function () {
 });
 
 /* ── 패널 외부 클릭 시 닫기 ── */
-document.addEventListener('click', function (e) {
+document.addEventListener('click', function(e) {
   if (panelOpen && !mobPanel.contains(e.target) && e.target !== mobToggle) {
     panelOpen = false;
     mobPanel.classList.remove('open');
