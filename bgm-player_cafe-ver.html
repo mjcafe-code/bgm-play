@@ -27,7 +27,7 @@
 
   <div id="bgm-wrap" style="position:sticky; top:20px; float:right; width:220px; margin-left:16px;">
     <iframe id="bgm-iframe"
-      src="https://mercihanrim.github.io/bgm-play/bgm-player_cafe-ver.html?data=파일명|곡제목|이미지"
+      src="https://mjcafe-code.github.io/bgm-play/bgm-player_cafe-ver.html?data=파일명|곡제목|이미지"
       width="220" height="450" frameborder="0" scrolling="no">
     </iframe>
   </div>
@@ -46,6 +46,13 @@
   [sticky 동작]
   삽입 코드의 position:sticky 덕분에 스크롤해도 플레이어가
   화면 상단에 고정되어 따라옵니다.
+
+  [모바일 동작]
+  window.screen.width <= 768 기준으로 모바일 감지.
+  모바일에서는 PC 플레이어(#pc-player)가 숨겨지고,
+  우측 하단 플로팅 버튼(▶) 클릭 시 슬라이드 업 패널이 표시됩니다.
+  재생/일시정지 버튼은 SVG 아이콘으로 구현되어 있습니다.
+  (mobTogglePlay/mobTogglePause, mobBtnPlay/mobBtnPause)
 
   [skin.html 연동 — postMessage]
   재생/정지 시 부모 페이지(skin.html)에 아래 메시지를 전송합니다.
@@ -346,6 +353,9 @@
   /* 모바일에서 접기 버튼 숨김 — 모바일은 슬라이드 패널로 대신함 */
   body.mobile #collapseBtn { display: none !important; }
 
+  /* 모바일에서 PC 플레이어 숨김 */
+  body.mobile #pc-player { display: none !important; }
+
   /* 모바일 요소들: 기본 숨김 */
   #mob-toggle, #mob-panel { display: none; }
 
@@ -360,7 +370,7 @@
     border-radius: 50%;
     background: var(--coffee);
     border: none;
-    font-size: 22px;
+    font-size: 0;
     cursor: pointer;
     align-items: center;
     justify-content: center;
@@ -431,7 +441,7 @@
     border-radius: 50%;
     background: var(--coffee);
     border: none;
-    font-size: 13px;
+    font-size: 0;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -518,7 +528,10 @@
   모바일: 플로팅 버튼
   클릭 시 슬라이드 업 패널 열림/닫힘
 ════════════════════════════════════ -->
-<button id="mob-toggle" aria-label="음악 플레이어 열기">▶</button>
+<button id="mob-toggle" aria-label="음악 플레이어 열기">
+  <svg id="mobTogglePlay" width="14" height="16" viewBox="0 0 14 16" fill="none"><polygon points="1,0 14,8 1,16" fill="#faf6f0"/></svg>
+  <svg id="mobTogglePause" width="12" height="14" viewBox="0 0 12 14" fill="none" style="display:none;"><rect x="0" y="0" width="4" height="14" fill="#faf6f0"/><rect x="8" y="0" width="4" height="14" fill="#faf6f0"/></svg>
+</button>
 
 <!-- ════════════════════════════════════
   모바일: 슬라이드 업 패널
@@ -531,7 +544,10 @@
     <div class="mob-info">
       <div id="mob-title"></div>
       <div class="mob-play-row">
-        <button id="mob-play-btn">▶</button>
+        <button id="mob-play-btn">
+          <svg id="mobBtnPlay" width="11" height="13" viewBox="0 0 14 16" fill="none"><polygon points="1,0 14,8 1,16" fill="#faf6f0"/></svg>
+          <svg id="mobBtnPause" width="10" height="12" viewBox="0 0 12 14" fill="none" style="display:none;"><rect x="0" y="0" width="4" height="14" fill="#faf6f0"/><rect x="8" y="0" width="4" height="14" fill="#faf6f0"/></svg>
+        </button>
         <span id="mob-label">Play</span>
       </div>
       <div class="mob-ctrl-row">
@@ -611,7 +627,7 @@ function setPlayState(playing) {
   playIcon.style.display  = playing ? 'none'  : 'block';
   pauseIcon.style.display = playing ? 'block' : 'none';
   label.textContent       = playing ? 'Pause' : 'Play';
-  mobToggle.textContent   = playing ? '⏸' : '▶';
+  /* mobToggle은 setMobPlayState에서 SVG로 처리 */
 }
 
 /* ── 파라미터 적용 ── */
@@ -716,9 +732,13 @@ var panelOpen = false;
 
 /* 재생 상태에 따라 모바일 버튼 UI 업데이트 */
 function setMobPlayState(playing) {
-  mobPlayBtn.textContent = playing ? '⏸' : '▶';
-  mobLabel.textContent   = playing ? 'Pause' : 'Play';
-  mobToggle.textContent  = playing ? '⏸' : '▶';
+  /* 모바일 패널 버튼 SVG 전환 */
+  document.getElementById('mobBtnPlay').style.display  = playing ? 'none'  : 'block';
+  document.getElementById('mobBtnPause').style.display = playing ? 'block' : 'none';
+  /* 플로팅 버튼 SVG 전환 */
+  document.getElementById('mobTogglePlay').style.display  = playing ? 'none'  : 'block';
+  document.getElementById('mobTogglePause').style.display = playing ? 'block' : 'none';
+  mobLabel.textContent = playing ? 'Pause' : 'Play';
 }
 
 /* 플로팅 버튼 클릭 → 패널 열기/닫기 */
