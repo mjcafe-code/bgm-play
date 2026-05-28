@@ -5,24 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BGM Player</title>
 <style>
-  /* ── 기본 리셋 ── */
+  /* ── 기본 리셋
+     html/body 배경을 transparent로 설정해 iframe 배경이 비치지 않도록 처리
+     allowtransparency="true" 속성을 iframe 태그에 함께 적용해야 완전한 투명 처리 가능 ── */
+  html, body {
+    background: transparent !important;
+  }
   *, *::before, *::after { box-sizing: border-box; }
   body {
     font-family: Arial, sans-serif;
     text-align: center;
     margin: 0;
     padding: 10px;
-    background: transparent;
   }
 
   /* ════════════════════════════════
      PC 플레이어
+     - 기본 표시 상태 (모바일에서는 body.mobile 클래스로 숨김)
+     - 이미지(#pc-img) + 제목(#trackTitle) + 재생버튼(#playBtn) + 라벨(#label) + 슬라이더(.control) 구성
   ════════════════════════════════ */
   #pc-player { display: block; }
   #pc-img {
     width: 180px;
     display: block;
-    margin: 0 auto 20px;
+    margin: 0 auto 10px;
   }
   #trackTitle {
     font-size: 16px;
@@ -30,21 +36,37 @@
     color: #000;
     margin-bottom: 10px;
   }
+
+  /* ── 재생 버튼 + 라벨 행
+     flex로 정렬, 라벨(#label)은 width 고정(40px)으로
+     Play ↔ Pause 전환 시 버튼 위치가 흔들리지 않도록 처리 ── */
+  #pc-play-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
   #playBtn {
     background: none;
     border: none;
     font-size: 28px;
     cursor: pointer;
     transition: transform 0.3s ease;
-    vertical-align: middle;
+    flex-shrink: 0;
   }
   #playBtn:hover { transform: scale(1.2); }
   #label {
-    font-size: 16px;
+    font-size: 14px;
     color: #d6336c;
-    margin-left: 8px;
-    vertical-align: middle;
+    margin-left: 6px;
+    display: inline-block;
+    width: 40px;        /* 고정 너비 — Play/Pause 전환 시 레이아웃 고정 */
+    text-align: left;
   }
+
+  /* ── 볼륨/재생위치 슬라이더
+     이모지 아이콘(🔊 / ⏱️) + range input 구성
+     accent-color로 슬라이더 색상을 분홍(#d6336c)으로 통일 ── */
   .control {
     margin-top: 15px;
     font-size: 14px;
@@ -54,12 +76,18 @@
 
   /* ════════════════════════════════
      모바일 전용 — body.mobile 클래스로 토글
+     JS의 checkMobile()이 window.innerWidth <= 768 시 body에 'mobile' 클래스 추가
+     → PC 플레이어 숨김 + 플로팅 버튼/슬라이드 패널 표시
   ════════════════════════════════ */
-
   body.mobile #pc-player { display: none !important; }
 
+  /* 플로팅 버튼(#mob-toggle)과 슬라이드 패널(#mob-panel)은
+     기본 display: none → body.mobile 클래스 시에만 활성화 */
   #mob-toggle, #mob-panel { display: none; }
 
+  /* ── 모바일 플로팅 버튼 (🌸)
+     position: fixed로 화면 우측 하단에 고정
+     재생 중에는 🎵로 아이콘 변경 (JS setMobPlayState에서 처리) ── */
   body.mobile #mob-toggle {
     display: flex;
     position: fixed;
@@ -82,6 +110,10 @@
   }
   body.mobile #mob-toggle:active { transform: scale(0.92); }
 
+  /* ── 모바일 슬라이드 업 패널
+     position: fixed로 화면 하단에 고정
+     기본 transform: translateY(100%)으로 숨겨진 상태
+     .open 클래스 추가 시 translateY(0)으로 슬라이드 업 ── */
   body.mobile #mob-panel {
     display: block;
     position: fixed;
@@ -96,11 +128,12 @@
     -webkit-backdrop-filter: blur(10px);
     padding: 14px 20px 24px;
     z-index: 9997;
-    transform: translateY(100%);
+    transform: translateY(100%);  /* 기본: 화면 아래로 숨김 */
     transition: transform 0.3s cubic-bezier(.4,0,.2,1);
   }
-  body.mobile #mob-panel.open { transform: translateY(0); }
+  body.mobile #mob-panel.open { transform: translateY(0); } /* 열림 상태 */
 
+  /* ── 패널 상단 드래그 핸들 (시각적 표시용) ── */
   #mob-handle {
     width: 36px;
     height: 4px;
@@ -121,6 +154,8 @@
     color: #444;
     margin-bottom: 10px;
   }
+
+  /* ── 모바일 컨트롤 행 (재생버튼 / 볼륨 / 재생위치) ── */
   .mob-ctrl-row {
     display: flex;
     align-items: center;
@@ -134,6 +169,8 @@
     height: 3px;
     accent-color: #d6336c;
   }
+
+  /* ── 모바일 재생 버튼 (원형) ── */
   #mob-play-btn {
     background: none;
     border: 1px solid rgba(214,51,108,0.4);
@@ -155,14 +192,16 @@
 <div id="pc-player">
   <img id="pc-img" src="" alt="플레이어 이미지">
   <div id="trackTitle"></div>
-  <button id="playBtn">🌸</button>
-  <span id="label">Play Background Music</span>
+  <div id="pc-play-row">
+    <button id="playBtn">🌸</button>
+    <span id="label">Play</span>
+  </div>
   <div class="control">
-    🔊 볼륨:
+    🔊
     <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
   </div>
   <div class="control">
-    ⏱️ 재생 위치:
+    ⏱️
     <input type="range" id="seekBar" min="0" max="100" step="1" value="0">
   </div>
 </div>
@@ -191,7 +230,7 @@
   </div>
 </div>
 
-<!-- 오디오 -->
+<!-- 오디오 — loop 속성으로 반복 재생 -->
 <audio id="bgm" loop></audio>
 
 <script>
@@ -238,16 +277,21 @@ var mobVol        = document.getElementById('mob-vol');
 var mobSeek       = document.getElementById('mob-seek');
 var mobImg        = document.getElementById('mob-img');
 
-/* ── 파라미터 적용 ── */
+/* ── 파라미터 적용
+   제목은 " / " 기준으로 줄바꿈(<br>) 처리
+   PC 이미지와 모바일 패널 이미지를 동일한 imgUrl로 설정 ── */
 if (srcUrl) bgm.src = srcUrl;
 document.getElementById('trackTitle').innerHTML = titleText.replace(/\s*\/\s*/g, '<br>');
 document.getElementById('mob-title').textContent = '🎼 ' + titleText;
 document.getElementById('pc-img').src = imgUrl;
 mobImg.src = imgUrl;
 
-/* ── 모바일 감지 — window.screen.width 기준 (기기 실제 해상도, iframe 환경 대응) ── */
+/* ── 모바일 감지 — window.innerWidth 기준
+   (iframe 환경에서 viewport 너비 정확히 감지)
+   window.screen.width는 기기 물리 해상도를 반환해 iframe 내부에서 부정확할 수 있음
+   window.innerWidth는 현재 viewport(iframe) 너비를 반환해 더 정확하게 동작 ── */
 function checkMobile() {
-  if (window.screen.width <= 768) {
+  if (window.innerWidth <= 768) {
     document.body.classList.add('mobile');
   } else {
     document.body.classList.remove('mobile');
@@ -261,15 +305,17 @@ window.addEventListener('resize', checkMobile);
 /* ── PC 컨트롤 ── */
 var panelOpen = false;
 
+/* 재생/정지 토글
+   label 너비(width: 40px) 고정으로 Play↔Pause 전환 시 버튼 위치 유지 */
 playBtn.addEventListener('click', function() {
   if (bgm.paused) {
     bgm.play().then(function() {
-      label.textContent   = 'Pause Music';
+      label.textContent   = 'Pause';
       playBtn.textContent = '🎵';
     }).catch(function(e) { console.error(e); });
   } else {
     bgm.pause();
-    label.textContent   = 'Play Background Music';
+    label.textContent   = 'Play';
     playBtn.textContent = '🌸';
   }
 });
@@ -278,11 +324,13 @@ seekBar.addEventListener('input', function() {
   if (bgm.duration) bgm.currentTime = (this.value / 100) * bgm.duration;
 });
 
-/* ── 모바일 컨트롤 ── */
+/* ── 모바일 컨트롤
+   플로팅 버튼 클릭 → 패널 슬라이드 업
+   패널 외부 클릭 → 패널 닫기 ── */
 function setMobPlayState(playing) {
   mobPlayBtn.textContent = playing ? '🎵' : '🌸';
   mobLabel.textContent   = playing ? '일시정지' : '재생';
-  mobToggle.textContent  = playing ? '🎵' : '🌸';
+  mobToggle.textContent  = playing ? '🎵' : '🌸';  /* 플로팅 버튼 아이콘도 동기화 */
 }
 
 mobToggle.addEventListener('click', function() {
@@ -303,7 +351,8 @@ mobSeek.addEventListener('input', function() {
   if (bgm.duration) bgm.currentTime = (this.value / 100) * bgm.duration;
 });
 
-/* ── 공용: 시간 업데이트 ── */
+/* ── 공용: 재생 시간 업데이트
+   timeupdate 이벤트로 PC/모바일 슬라이더를 실시간 동기화 ── */
 bgm.addEventListener('timeupdate', function() {
   if (bgm.duration) {
     var pct = (bgm.currentTime / bgm.duration) * 100;
@@ -312,7 +361,8 @@ bgm.addEventListener('timeupdate', function() {
   }
 });
 
-/* ── 패널 외부 클릭 시 닫기 ── */
+/* ── 패널 외부 클릭 시 닫기
+   mobPanel 영역 밖 또는 mobToggle 버튼 이외 영역 클릭 시 패널 닫힘 ── */
 document.addEventListener('click', function(e) {
   if (panelOpen && !mobPanel.contains(e.target) && e.target !== mobToggle) {
     panelOpen = false;
