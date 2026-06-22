@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Background Music Player</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+    background: transparent;
+  }
+  .control { margin-top: 15px; font-size: 14px; color: #333; }
+  #trackTitle { font-size: 15px; font-weight: bold; color: #444; margin-bottom: 10px; }
+  .trackBtn {
+    margin: 5px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #f9f9f9;
+  }
+  .trackBtn:hover { background: #e6f0ff; }
+</style>
+</head>
+<body>
+
+<!-- 연주자 이미지 -->
+<div style="margin-bottom:20px;">
+  <img src="Wolfgang-amadeus-mozart_chacracter_1024.png" alt="모차르트" 
+       style="width:180px; display:block; margin:0 auto;">
+</div>
+
+<!-- 곡 제목 표시 -->
+<div id="trackTitle">🎼 곡을 선택하세요</div>
+
+<!-- 오디오 -->
+<audio id="bgm" loop></audio>
+
+<!-- 곡 선택 버튼 -->
+<div>
+  <button class="trackBtn" 
+          data-title="Diana Damnau - Queen of the Night aria"
+          data-src="The_Magic_Flute–Queen_of_the_Night_aria_(Mozart-Diana_Damrau).m4a">🌸Queen of Night aria</button>
+
+  <button class="trackBtn" 
+          data-title="Mozart(Die Zauberflöte) - Pa-Pa-Pa Duet"
+          data-src="Mozart-Die_Zauberflöte-Pa_Pa_Pa_Duet.m4a">🌻Pa-Pa-Pa Duet</button>
+</div>
+
+<!-- 볼륨 슬라이더 -->
+<div class="control">
+  🔊 볼륨:
+  <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+</div>
+
+<!-- 시크바 -->
+<div class="control">
+  ⏱️ 재생 위치:
+  <input type="range" id="seekBar" min="0" max="100" step="1" value="0">
+</div>
+
+<script>
+const bgm = document.getElementById("bgm");
+const volumeControl = document.getElementById("volumeControl");
+const seekBar = document.getElementById("seekBar");
+const trackTitle = document.getElementById("trackTitle");
+
+// 곡 선택 버튼 이벤트
+document.querySelectorAll(".trackBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const src = btn.getAttribute("data-src");
+    const title = btn.getAttribute("data-title");
+
+    bgm.src = src;
+    trackTitle.textContent = "🎼 " + title;
+    bgm.play().catch(err => console.error("재생 실패:", err));
+  });
+});
+
+// 볼륨 조절
+volumeControl.addEventListener("input", () => {
+  bgm.volume = volumeControl.value;
+});
+
+// 시크바 업데이트
+bgm.addEventListener("timeupdate", () => {
+  if (bgm.duration) {
+    const progress = (bgm.currentTime / bgm.duration) * 100;
+    seekBar.value = progress;
+  }
+});
+
+// 시크바 이동
+seekBar.addEventListener("input", () => {
+  const newTime = (seekBar.value / 100) * bgm.duration;
+  bgm.currentTime = newTime;
+});
+</script>
+
+</body>
+</html>
