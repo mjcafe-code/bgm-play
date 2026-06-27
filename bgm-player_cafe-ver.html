@@ -7,536 +7,431 @@
 
 <!--
   ════════════════════════════════════════════════════════════
-  MJ BGM Player — Cafe Style Version
+  MJ BGM Player — Cafe Style Version v3.0
   작성: Hanrim (Cozy Shelter)
+  v3.0 — Wix 스타일 UI 개선 (2026-06)
 
   [사용법]
   아래 형식으로 iframe src에 파라미터를 넣어주세요.
-  bgm-player_cafe-ver.html?data=음악파일|곡제목|이미지파일
 
-  예시:
-  ?data=The_Swan.m4a|The Swan / Yo-Yo Ma|new_violin-girl.png
+  단일곡:
+  bgm-player_cafe-ver.html?data=음악1%7C제목1%7C이미지1
+
+  2트랙:
+  bgm-player_cafe-ver.html?data=음악1%7C제목1%7C이미지1%7C%7C음악2%7C제목2%7C이미지2
 
   [파라미터 설명]
-  · 1번째 : 음악 파일명 또는 전체 URL (필수)
-  · 2번째 : 곡 제목 — " / "로 구분하면 두 줄 표시 (선택)
-  · 3번째 : 이미지 파일명 또는 전체 URL (선택, 기본값: violin-girl.png)
+  · 필드 구분: %7C  (| 인코딩)
+  · 트랙 구분: %7C%7C (|| 인코딩)
+  · 트랙 1: 필수 / 트랙 2: 선택 (비워두면 단일곡 동작)
+  · 제목에 " / " 포함 시 곡명 / 아티스트 분리 표시
+    예: "Love Me / Yiruma" → 곡명: Love Me / 아티스트: Yiruma
+
+  [레이아웃]
+  단일곡: 앨범커버 + 곡명/아티스트 + 진행바 + 컨트롤 행 (480px)
+  2트랙 : 위와 동일 + 하단 트랙리스트 2행 (530px)
+          트랙 클릭 시 커버/곡명 전환, 재생 중이면 즉시 전환 재생
 
   [티스토리 게시글 삽입 코드]
-  아래 코드를 게시글 HTML 모드에 붙여넣으세요.
-
-  <div id="bgm-wrap" style="position:sticky; top:20px; float:right; width:220px; margin-left:16px;">
-    <iframe id="bgm-iframe"
-      src="https://mjcafe-code.github.io/bgm-play/bgm-player_cafe-ver.html?data=파일명|곡제목|이미지"
-      width="220" height="450" frameborder="0" scrolling="no">
-    </iframe>
+  <div class="music-player-box">
+    <iframe src="https://mjcafe-code.github.io/bgm-play/bgm-player_cafe-ver.html?data=파일명|곡제목|이미지"
+      width="270" height="480" frameborder="0" scrolling="no"></iframe>
   </div>
-  <script>
-  window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'bgm-resize') {
-      document.getElementById('bgm-iframe').style.height = e.data.height + 'px';
-    }
-  });
-  </script>
 
   [접기/펼치기]
   플레이어 우측 상단 ∨/∧ 버튼으로 접고 펼칩니다.
   접힌 상태에서도 음악은 계속 재생됩니다.
 
-  [sticky 동작]
-  삽입 코드의 position:sticky 덕분에 스크롤해도 플레이어가
-  화면 상단에 고정되어 따라옵니다.
-
   [모바일 동작]
   window.screen.width <= 768 기준으로 모바일 감지.
-  모바일에서는 PC 플레이어(#pc-player)가 숨겨지고,
+  모바일에서는 PC 플레이어가 숨겨지고,
   우측 하단 플로팅 버튼(▶) 클릭 시 슬라이드 업 패널이 표시됩니다.
-  재생/일시정지 버튼은 SVG 아이콘으로 구현되어 있습니다.
-  (mobTogglePlay/mobTogglePause, mobBtnPlay/mobBtnPause)
 
   [skin.html 연동 — postMessage]
-  재생/정지 시 부모 페이지(skin.html)에 아래 메시지를 전송합니다.
-  · 재생 시: { type: 'cafe-bgm-play' }
-  · 정지 시: { type: 'cafe-bgm-pause' }
-  skin.html에서 이 메시지를 수신하면 MJ Player v1.0이 자동으로 일시정지됩니다.
-  (cozy-drift_skin_v4.html 이상 버전에서 지원)
+  재생 시: { type: 'cafe-bgm-play' }
+  정지 시: { type: 'cafe-bgm-pause' }
+  skin.html의 MJ Player v1.0이 자동으로 일시정지됩니다.
   ════════════════════════════════════════════════════════════
 -->
 
-<!-- Google Fonts: 제목용 세리프체 + 라벨용 산세리프체 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 
 <style>
-  /* 모든 요소에 box-sizing 적용 — 레이아웃 계산 오류 방지 */
   *, *::before, *::after { box-sizing: border-box; }
 
-  /* ──────────────────────────────────
-     디자인 색상 변수
-     카페 감성의 크림/브라운 계열 팔레트
-  ────────────────────────────────── */
+  /* ── 색상 변수 ── */
   :root {
-    --cream:    #faf6f0;  /* 배경 크림색 */
-    --coffee:   #6b4226;  /* 버튼·강조 브라운 */
-    --espresso: #3b1f0e;  /* 텍스트 다크 브라운 */
-    --latte:    #c4956a;  /* 라벨·보조 골드 브라운 */
-    --mist:     #e8ddd0;  /* 구분선·슬라이더 베이지 */
-    --shadow:   rgba(59, 31, 14, 0.12); /* 그림자 */
+    --cream:    #faf6f0;
+    --coffee:   #6b4226;
+    --espresso: #3b1f0e;
+    --latte:    #c4956a;
+    --mist:     #e8ddd0;
+    --shadow:   rgba(59,31,14,0.12);
   }
 
-  /* body — iframe 내부 기본 설정 */
   body {
     font-family: 'Lato', sans-serif;
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     background: transparent;
     color: var(--espresso);
     overflow: hidden;
-    position: relative; /* collapseBtn absolute 기준점 */
+    position: relative;
   }
 
-  /* 플레이어 전체 래퍼 — collapseBtn absolute 기준점 */
   #player-wrapper {
     position: relative;
-  }
-
-  /* 접기/펼치기 토글 버튼
-     우측 상단 고정 위치
-  ══════════════════════════════════ */
-  #collapseBtn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--mist);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: var(--latte);
-    transition: background 0.2s;
-    z-index: 10;
-  }
-  #collapseBtn:hover {
-    background: var(--coffee);
-    color: var(--cream);
-  }
-
-  /* ══════════════════════════════════
-     PC 플레이어 — 기본(펼친) 상태
-  ══════════════════════════════════ */
-  #pc-player {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 16px 12px 12px;
-    transition: all 0.3s ease;
-  }
-
-  /* ──────────────────────────────────
-     접힌 상태 — body.collapsed 클래스가
-     추가될 때 적용됩니다.
-     JS에서 collapseBtn 클릭 시 토글됩니다.
-  ────────────────────────────────── */
-
-  /* 접힌 상태: 가로 레이아웃, 높이 64px로 압축 */
-  body.collapsed #pc-player {
-    flex-direction: row;
-    padding: 0 12px;
-    height: 64px;
-    gap: 10px;
-  }
-
-  /* 접힌 상태에서 숨길 요소들 */
-  body.collapsed .pc-img-frame,  /* 앨범 이미지 */
-  body.collapsed .pc-divider,    /* 구분선 */
-  body.collapsed .pc-ctrl {      /* 볼륨/시크 슬라이더 */
-    display: none !important;
-  }
-
-  /* 접힌 상태: 곡 제목을 한 줄로 압축 */
-  body.collapsed #trackTitle {
-    font-size: 12px;
-    margin-bottom: 0;
-    white-space: nowrap;
+    border-radius: 16px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
-    text-align: left;
+    background: var(--cream);
+    box-shadow:
+      0 12px 40px rgba(59,31,14,.16),
+      0 3px 10px rgba(59,31,14,.10);
   }
 
-  /* 접힌 상태: 재생 버튼 행 마진 제거 */
-  body.collapsed .pc-play-row {
-    margin-bottom: 0;
-    flex-shrink: 0;
+  /* ── PC 플레이어 ── */
+  #pc-player {
+    display: flex; flex-direction: column;
+    width: 270px; overflow: hidden;
   }
 
-  /* 접힌 상태: Play/Pause 텍스트 라벨 숨김 */
-  body.collapsed #label { display: none; }
-
-  /* ══════════════════════════════════
-     앨범 이미지 프레임
-     이중 테두리로 빈티지 액자 느낌
-  ══════════════════════════════════ */
-  .pc-img-frame {
-    position: relative;
-    width: 180px;
-    margin-bottom: 16px;
-  }
-  /* 안쪽 테두리 */
-  .pc-img-frame::before {
-    content: '';
-    position: absolute;
-    inset: -5px;
-    border: 1px solid var(--latte);
-    border-radius: 4px;
-    opacity: 0.5;
-  }
-  /* 바깥쪽 테두리 */
-  .pc-img-frame::after {
-    content: '';
-    position: absolute;
-    inset: -10px;
-    border: 1px solid var(--mist);
-    border-radius: 6px;
-    opacity: 0.4;
+  /* ── 앨범 커버 (상단 모서리만 둥글게) ── */
+  #pc-cover {
+    width: 270px; height: 270px; overflow: hidden; flex-shrink: 0;
   }
   #pc-img {
-    width: 180px;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
     display: block;
-    border-radius: 3px;
-    box-shadow: 0 4px 18px var(--shadow);
+  }
+  #collapseBtn {
+    position: absolute; top: 10px; right: 10px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(255,255,255,.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--espresso);
+    transition: background .2s; z-index: 10;
+    box-shadow: 0 1px 4px rgba(59,31,14,.15);
+  }
+  #collapseBtn:hover { background: var(--coffee); color: var(--cream); }
+
+  /* ── PC 플레이어 ── */
+  #pc-player {
+    display: flex; flex-direction: column;
+    width: 270px; overflow: hidden;
   }
 
-  /* ══════════════════════════════════
-     곡 제목 — Playfair Display 세리프체
-  ══════════════════════════════════ */
+  /* ── 앨범 커버 (Wix 스타일 — 정사각형 꽉 채움) ── */
+  #pc-cover {
+    width: 270px; height: 270px; overflow: hidden; flex-shrink: 0;
+  }
+  #pc-img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    display: block;
+  }
+
+  /* ── 곡명/아티스트 ── */
+  #pc-info {
+    padding: 14px 16px 6px; text-align: center;
+    background: var(--cream);
+  }
   #trackTitle {
     font-family: 'Playfair Display', serif;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--espresso);
-    letter-spacing: 0.02em;
-    line-height: 1.5;
-    margin-bottom: 14px;
-    text-align: center;
-    /* 파라미터에서 " / "로 구분 시 JS가 <br>로 변환해 두 줄 표시 */
+    font-size: 14px; font-weight: 600;
+    color: var(--espresso); letter-spacing: .02em;
+    line-height: 1.4; margin-bottom: 3px;
+    font-style: normal;
   }
-
-  /* ══════════════════════════════════
-     재생 버튼 행
-  ══════════════════════════════════ */
-  .pc-play-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  /* ──────────────────────────────────
-     재생/일시정지 버튼
-     인라인 SVG 아이콘으로 정중앙 배치합니다.
-     JS의 setPlayState()가 playIcon/pauseIcon을 교체합니다.
-  ────────────────────────────────── */
-  #playBtn {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--coffee);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 10px rgba(107, 66, 38, 0.35);
-    transition: transform 0.2s, box-shadow 0.2s;
-    flex-shrink: 0;
-    font-size: 0;      /* 텍스트 내용 숨김 (SVG 아이콘만 표시) */
-    position: relative;
-  }
-  #playBtn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 4px 16px rgba(107, 66, 38, 0.45);
-  }
-  #playBtn:active { transform: scale(0.95); }
-
-  /* ::after 비활성화 — SVG 방식으로 전환 후 불필요 */
-  #playBtn::after { display: none; }
-  #playBtn.playing::after { display: none; }
-
-  /* Play / Pause 텍스트 라벨 */
-  #label {
-    font-size: 12px;
-    font-weight: 300;
-    letter-spacing: 0.08em;
+  #trackArtist {
+    font-size: 11px; font-weight: 300;
+    color: var(--latte); letter-spacing: .06em;
     text-transform: uppercase;
-    color: var(--latte);
-    min-width: 60px; /* 텍스트 길이 변화 시 버튼 위치 흔들림 방지 */
   }
 
-  /* ══════════════════════════════════
-     볼륨·시크바 슬라이더 컨트롤
-  ══════════════════════════════════ */
-  .pc-ctrl {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
+  /* ── 진행바 + 타임코드 ── */
+  #pc-seek-wrap { padding: 10px 16px 4px; background: var(--cream); }
+  #seekBar {
+    -webkit-appearance: none; width: 100%; height: 2px;
+    background: var(--mist); border-radius: 2px;
+    outline: none; cursor: pointer; display: block; margin-bottom: 3px;
   }
-  .ctrl-icon {
-    font-size: 13px;
-    flex-shrink: 0;
-    opacity: 0.6;
+  #seekBar::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 11px; height: 11px;
+    border-radius: 50%; background: var(--espresso);
   }
-  .ctrl-label {
-    font-size: 10px;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--latte);
-    flex-shrink: 0;
-    width: 28px;
+  #seekBar::-moz-range-thumb {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--espresso); border: none;
+  }
+  .time-row { display: flex; justify-content: space-between; }
+  #timeCur, #timeDur {
+    font-size: 10px; font-weight: 300;
+    color: var(--latte); letter-spacing: .04em;
   }
 
-  /* 슬라이더 기본 스타일 — 브라우저 기본 디자인 제거 후 커스텀 */
-  input[type=range] {
-    -webkit-appearance: none;
-    flex: 1;
-    height: 3px;
-    background: var(--mist);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-  }
-  /* 슬라이더 thumb (드래그 핸들) */
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--coffee);
-    box-shadow: 0 1px 4px var(--shadow);
-    transition: transform 0.15s;
-  }
-  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
-  /* Firefox용 */
-  input[type=range]::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--coffee);
-    border: none;
-  }
-
-  /* 제목과 컨트롤 사이 구분선 */
-  .pc-divider {
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(to right, transparent, var(--mist), transparent);
-    margin: 4px 0 12px;
-  }
-
-  /* ══════════════════════════════════
-     모바일 전용 — body.mobile 클래스로 토글
-     JS의 checkMobile()이 window.screen.width를
-     기준으로 클래스를 추가/제거합니다.
-     (CSS 미디어 쿼리 대신 JS 감지 — iframe 내부
-      viewport 오인식 문제 방지)
-  ══════════════════════════════════ */
-
-  /* 모바일에서 접기 버튼 숨김 — 모바일은 슬라이드 패널로 대신함 */
-  body.mobile #collapseBtn { display: none !important; }
-
-  /* 모바일에서 PC 플레이어 숨김 */
-  body.mobile #pc-player { display: none !important; }
-
-  /* 모바일 요소들: 기본 숨김 */
-  #mob-toggle, #mob-panel { display: none; }
-
-  /* ── 플로팅 버튼 (우측 하단 고정) ── */
-  body.mobile #mob-toggle {
-    display: flex;
-    position: fixed;
-    bottom: 72px;
-    right: 18px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--coffee);
-    border: none;
-    font-size: 0;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 3px 14px rgba(107, 66, 38, 0.45);
-    z-index: 9998;
-    transition: transform 0.2s;
-    color: var(--cream);
-  }
-  body.mobile #mob-toggle:active { transform: scale(0.92); }
-
-  /* ── 슬라이드 업 패널 ──
-     기본: 화면 아래로 숨김 (translateY 100%)
-     .open 클래스 추가 시: 화면에 표시 (translateY 0)
-  ── */
-  body.mobile #mob-panel {
-    display: block;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
+  /* ── 컨트롤 행: 볼륨 | 이전 | 재생·정지 | 다음 ── */
+  #pc-ctrl-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px 16px; position: relative;
     background: var(--cream);
-    border-top: 1px solid var(--mist);
+  }
+
+  /* 볼륨 래퍼 */
+  .vol-wrap { position: relative; display: flex; align-items: center; }
+  #volBtn {
+    background: none; border: none; cursor: pointer; padding: 5px;
+    color: var(--espresso); opacity: .6;
+    display: flex; align-items: center; transition: opacity .2s;
+  }
+  #volBtn:hover { opacity: 1; }
+
+  /* 볼륨 수직 팝업 */
+  #vol-popup {
+    display: none; position: absolute; bottom: 38px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--cream); border: 1px solid var(--mist);
+    border-radius: 18px; box-shadow: 0 4px 14px var(--shadow);
+    padding: 10px 8px; z-index: 100;
+    flex-direction: column; align-items: center; gap: 5px; width: 30px;
+  }
+  #vol-popup.open { display: flex; }
+  #volumeControl {
+    -webkit-appearance: slider-vertical;
+    writing-mode: vertical-lr; direction: rtl;
+    width: 4px; height: 70px;
+    background: var(--mist); outline: none; cursor: pointer;
+    border-radius: 2px; padding: 0;
+  }
+  #volumeControl::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px;
+    border-radius: 50%; background: var(--coffee);
+  }
+  #volumeControl::-moz-range-thumb {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--coffee); border: none;
+  }
+  #volPct { font-size: 9px; color: var(--latte); text-align: center; }
+
+  /* 이전/다음 버튼 */
+  .skip-btn {
+    background: none; border: none; cursor: pointer; padding: 5px;
+    color: var(--espresso); opacity: .7;
+    display: flex; align-items: center; transition: opacity .2s;
+  }
+  .skip-btn:hover { opacity: 1; }
+
+  /* 재생/정지 버튼 */
+  #playBtn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--coffee); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 10px rgba(107,66,38,.35);
+    transition: transform .2s, box-shadow .2s; font-size: 0;
+  }
+  #playBtn:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(107,66,38,.45); }
+  #playBtn:active { transform: scale(.95); }
+
+  /* 균형 spacer */
+  .ctrl-spacer { width: 30px; }
+
+  /* ── 트랙리스트 (2트랙일 때만 표시) ── */
+  #pc-tracklist {
+    display: none;
+    border-top: 1px solid rgba(59,31,14,.06);
+    background: rgba(59,31,14,.02);
+  }
+  #pc-tracklist.show { display: block; }
+  .track-item {
+    display: flex; align-items: center;
+    padding: 10px 16px; cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background .15s, border-color .15s;
+  }
+  .track-item:hover { background: rgba(59,31,14,.05); }
+  .track-item.active {
+    background: rgba(107,66,38,.07);
+    border-left-color: var(--coffee);
+  }
+  .track-num {
+    font-size: 11px; color: var(--latte);
+    width: 20px; flex-shrink: 0; margin-right: 10px;
+  }
+  .track-name { font-size: 13px; color: var(--espresso); font-style: normal; }
+  .track-artist { font-size: 11px; font-style: italic; color: var(--latte); margin-left: 6px; }
+
+  /* 접힌 상태에서 트랙리스트 숨김 */
+  body.collapsed #pc-tracklist { display: none !important; }
+  body.collapsed #pc-cover,
+  body.collapsed #pc-info,
+  body.collapsed #pc-seek-wrap { display: none; }
+  body.collapsed #pc-ctrl-row { padding: 0 14px; height: 64px; background: var(--cream); }
+  body.collapsed .vol-wrap,
+  body.collapsed .ctrl-spacer { display: none; }
+  #trackMini {
+    display: none; font-size: 11px; color: var(--espresso);
+    font-family: 'Playfair Display', serif; font-style: normal;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 110px;
+  }
+  body.collapsed #trackMini { display: block; }
+
+  /* ── 모바일 ── */
+  body.mobile #collapseBtn { display: none !important; }
+  body.mobile #pc-player   { display: none !important; }
+  #mob-toggle, #mob-panel  { display: none; }
+
+  body.mobile #mob-toggle {
+    display: flex; position: fixed;
+    bottom: 72px; right: 18px;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--coffee); border: none; font-size: 0;
+    cursor: pointer; align-items: center; justify-content: center;
+    box-shadow: 0 3px 14px rgba(107,66,38,.45);
+    z-index: 9998; transition: transform .2s; color: var(--cream);
+  }
+  body.mobile #mob-toggle:active { transform: scale(.92); }
+
+  body.mobile #mob-panel {
+    display: block; position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--cream); border-top: 1px solid var(--mist);
     border-radius: 18px 18px 0 0;
-    box-shadow: 0 -6px 28px rgba(59, 31, 14, 0.14);
-    padding: 12px 20px 28px;
-    z-index: 9997;
+    box-shadow: 0 -6px 28px rgba(59,31,14,.14);
+    padding: 12px 20px 28px; z-index: 9997;
     transform: translateY(100%);
-    transition: transform 0.32s cubic-bezier(.4, 0, .2, 1);
+    transition: transform .32s cubic-bezier(.4,0,.2,1);
   }
   body.mobile #mob-panel.open { transform: translateY(0); }
 
-  /* 패널 상단 드래그 핸들 (장식용) */
   #mob-handle {
-    width: 32px;
-    height: 3px;
-    background: var(--mist);
-    border-radius: 2px;
-    margin: 0 auto 14px;
+    width: 32px; height: 3px; background: var(--mist);
+    border-radius: 2px; margin: 0 auto 14px;
   }
-
-  /* 패널 내부: 이미지 + 정보 가로 배치 */
   .mob-inner { display: flex; align-items: center; gap: 14px; }
-
-  /* 모바일 앨범 이미지 */
   #mob-img {
-    width: 64px;
-    height: 64px;
-    object-fit: cover;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px var(--shadow);
-    flex-shrink: 0;
+    width: 64px; height: 64px; object-fit: cover;
+    border-radius: 6px; box-shadow: 0 2px 10px var(--shadow); flex-shrink: 0;
   }
-
-  /* 패널 우측 정보 영역 */
   .mob-info { flex: 1; min-width: 0; }
   #mob-title {
     font-family: 'Playfair Display', serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--espresso);
-    margin-bottom: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 13px; font-weight: 600; font-style: normal;
+    color: var(--espresso); margin-bottom: 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .mob-play-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   #mob-play-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: var(--coffee);
-    border: none;
-    font-size: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(107, 66, 38, 0.35);
-    flex-shrink: 0;
-    transition: transform 0.15s;
-    color: var(--cream);
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--coffee); border: none; font-size: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(107,66,38,.35); flex-shrink: 0;
+    transition: transform .15s; color: var(--cream);
   }
-  #mob-play-btn:active { transform: scale(0.92); }
+  #mob-play-btn:active { transform: scale(.92); }
   #mob-label {
-    font-size: 11px;
-    font-weight: 300;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--latte);
+    font-size: 11px; font-weight: 300;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--latte);
   }
   .mob-ctrl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-  .mob-ctrl-row .ctrl-icon { font-size: 11px; }
-  .mob-ctrl-row input[type=range] { height: 2px; }
+  .mob-ctrl-row input[type=range] {
+    -webkit-appearance: none; flex: 1; height: 2px;
+    background: var(--mist); border-radius: 2px; outline: none; cursor: pointer;
+  }
+  .mob-ctrl-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 10px; height: 10px;
+    border-radius: 50%; background: var(--coffee);
+  }
 </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════
-  플레이어 전체 래퍼
-  collapseBtn의 position:absolute 기준점
-════════════════════════════════════ -->
 <div id="player-wrapper">
 
-<!-- 접기/펼치기 버튼 -->
 <button id="collapseBtn" aria-label="접기/펼치기">∨</button>
 
-<!-- ════════════════════════════════════
-  PC 플레이어
-  기본(펼친) 상태에서 표시
-  모바일에서는 body.mobile 클래스로 숨김
-════════════════════════════════════ -->
+<!-- PC 플레이어 -->
 <div id="pc-player">
 
-  <!-- 앨범 이미지 (파라미터 3번째 값) -->
-  <div class="pc-img-frame">
+  <!-- 앨범 커버 -->
+  <div id="pc-cover">
     <img id="pc-img" src="" alt="">
   </div>
 
-  <!-- 곡 제목 (파라미터 2번째 값, " / "로 줄바꿈) -->
-  <div id="trackTitle"></div>
+  <!-- 접힌 상태 미니 제목 -->
+  <div id="trackMini"></div>
 
-  <!-- 구분선 -->
-  <div class="pc-divider"></div>
+  <!-- 곡명/아티스트 -->
+  <div id="pc-info">
+    <div id="trackTitle"></div>
+    <div id="trackArtist"></div>
+  </div>
 
-  <!-- 재생 버튼 + 상태 텍스트 -->
-  <div class="pc-play-row">
-    <button id="playBtn" aria-label="Play">
-      <svg id="playIcon" width="14" height="16" viewBox="0 0 14 16" fill="none">
-        <polygon points="1,0 14,8 1,16" fill="#faf6f0"/>
-      </svg>
-      <svg id="pauseIcon" width="12" height="14" viewBox="0 0 12 14" fill="none" style="display:none;">
-        <rect x="0" y="0" width="4" height="14" fill="#faf6f0"/>
-        <rect x="8" y="0" width="4" height="14" fill="#faf6f0"/>
+  <!-- 진행바 + 타임코드 -->
+  <div id="pc-seek-wrap">
+    <input type="range" id="seekBar" min="0" max="100" step="1" value="0">
+    <div class="time-row">
+      <span id="timeCur">0:00</span>
+      <span id="timeDur">-:--</span>
+    </div>
+  </div>
+
+  <!-- 컨트롤 행: 볼륨 | 이전 | 재생·정지 | 다음 -->
+  <div id="pc-ctrl-row">
+    <div class="vol-wrap">
+      <button id="volBtn" aria-label="볼륨">
+        <svg width="16" height="14" viewBox="0 0 18 16" fill="none">
+          <polygon points="0,4 5,4 9,0 9,16 5,12 0,12" fill="currentColor"/>
+          <path d="M11.5 3.5C13.5 5 13.5 11 11.5 12.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          <path d="M14 1.5C17.5 4 17.5 12 14 14.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div id="vol-popup">
+        <input type="range" id="volumeControl" min="0" max="1" step="0.05" value="0.5"
+          orient="vertical" aria-label="볼륨 조절">
+        <span id="volPct">50%</span>
+      </div>
+    </div>
+
+    <button class="skip-btn" id="prevBtn" aria-label="이전">
+      <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+        <polygon points="17,1 7,9 17,17" fill="currentColor"/>
+        <rect x="1" y="1" width="4" height="16" rx="1" fill="currentColor"/>
       </svg>
     </button>
-    <span id="label">Play</span>
-  </div>
 
-  <!-- 볼륨 슬라이더 -->
-  <div class="pc-ctrl">
-    <span class="ctrl-icon">🔊</span>
-    <span class="ctrl-label">Vol</span>
-    <input type="range" id="volumeControl" min="0" max="1" step="0.05" value="0.5">
-  </div>
+    <button id="playBtn">
+      <svg id="playIcon" width="14" height="16" viewBox="0 0 16 18" fill="none"><polygon points="1,0 16,9 1,18" fill="#faf6f0"/></svg>
+      <svg id="pauseIcon" width="12" height="14" viewBox="0 0 14 16" fill="none" style="display:none"><rect x="0" y="0" width="5" height="16" rx="1" fill="#faf6f0"/><rect x="9" y="0" width="5" height="16" rx="1" fill="#faf6f0"/></svg>
+    </button>
 
-  <!-- 재생 위치(시크) 슬라이더 -->
-  <div class="pc-ctrl">
-    <span class="ctrl-icon">⏱</span>
-    <span class="ctrl-label">Seek</span>
-    <input type="range" id="seekBar" min="0" max="100" step="1" value="0">
+    <button class="skip-btn" id="nextBtn" aria-label="다음">
+      <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+        <polygon points="1,1 11,9 1,17" fill="currentColor"/>
+        <rect x="13" y="1" width="4" height="16" rx="1" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <div class="ctrl-spacer"></div>
   </div>
+  <!-- 트랙리스트 (2트랙일 때만 표시) -->
+  <div id="pc-tracklist"></div>
 
 </div><!-- /#pc-player -->
 </div><!-- /#player-wrapper -->
 
-<!-- ════════════════════════════════════
-  모바일: 플로팅 버튼
-  클릭 시 슬라이드 업 패널 열림/닫힘
-════════════════════════════════════ -->
+<!-- 모바일 플로팅 버튼 -->
 <button id="mob-toggle" aria-label="음악 플레이어 열기">
-  <svg id="mobTogglePlay" width="14" height="16" viewBox="0 0 14 16" fill="none"><polygon points="1,0 14,8 1,16" fill="#faf6f0"/></svg>
-  <svg id="mobTogglePause" width="12" height="14" viewBox="0 0 12 14" fill="none" style="display:none;"><rect x="0" y="0" width="4" height="14" fill="#faf6f0"/><rect x="8" y="0" width="4" height="14" fill="#faf6f0"/></svg>
+  <svg id="mobTogglePlay" width="14" height="16" viewBox="0 0 16 18" fill="none"><polygon points="1,0 16,9 1,18" fill="#faf6f0"/></svg>
+  <svg id="mobTogglePause" width="12" height="14" viewBox="0 0 14 16" fill="none" style="display:none"><rect x="0" y="0" width="5" height="16" rx="1" fill="#faf6f0"/><rect x="9" y="0" width="5" height="16" rx="1" fill="#faf6f0"/></svg>
 </button>
 
-<!-- ════════════════════════════════════
-  모바일: 슬라이드 업 패널
-  .open 클래스 추가 시 화면에 표시
-════════════════════════════════════ -->
+<!-- 모바일 슬라이드 업 패널 -->
 <div id="mob-panel">
   <div id="mob-handle"></div>
   <div class="mob-inner">
@@ -545,155 +440,262 @@
       <div id="mob-title"></div>
       <div class="mob-play-row">
         <button id="mob-play-btn">
-          <svg id="mobBtnPlay" width="11" height="13" viewBox="0 0 14 16" fill="none"><polygon points="1,0 14,8 1,16" fill="#faf6f0"/></svg>
-          <svg id="mobBtnPause" width="10" height="12" viewBox="0 0 12 14" fill="none" style="display:none;"><rect x="0" y="0" width="4" height="14" fill="#faf6f0"/><rect x="8" y="0" width="4" height="14" fill="#faf6f0"/></svg>
+          <svg id="mobBtnPlay" width="11" height="13" viewBox="0 0 16 18" fill="none"><polygon points="1,0 16,9 1,18" fill="#faf6f0"/></svg>
+          <svg id="mobBtnPause" width="10" height="12" viewBox="0 0 14 16" fill="none" style="display:none"><rect x="0" y="0" width="5" height="16" rx="1" fill="#faf6f0"/><rect x="9" y="0" width="5" height="16" rx="1" fill="#faf6f0"/></svg>
         </button>
         <span id="mob-label">Play</span>
       </div>
       <div class="mob-ctrl-row">
-        <span class="ctrl-icon">🔊</span>
+        <span style="font-size:11px;opacity:.6;">🔊</span>
         <input type="range" id="mob-vol" min="0" max="1" step="0.05" value="0.5">
       </div>
       <div class="mob-ctrl-row">
-        <span class="ctrl-icon">⏱</span>
+        <span style="font-size:11px;opacity:.6;">⏱</span>
         <input type="range" id="mob-seek" min="0" max="100" step="1" value="0">
       </div>
     </div>
   </div>
 </div>
 
-<!-- 오디오 태그 — loop 속성으로 반복 재생 -->
 <audio id="bgm" loop></audio>
 
 <script>
 /* ════════════════════════════════════════════════════════════
-   URL 파라미터 파싱 — | 구분자 방식
+   URL 파라미터 파싱 — 2트랙 지원
+   형식: ?data=음악1%7C제목1%7C이미지1%7C%7C음악2%7C제목2%7C이미지2
 
-   티스토리 에디터가 &를 &amp;로 자동 변환하는 문제를 방지하기 위해
-   파라미터를 | 하나로 묶어서 전달합니다.
-
-   사용법:
-   bgm-player_cafe-ver.html?data=파일명|곡제목|이미지파일명또는URL
-
-   · 1번째(src)   : 음악 파일명 또는 URL (필수)
-   · 2번째(title) : 플레이어에 표시될 곡 제목 (선택, 기본값: "Background Music")
-                    " / "를 넣으면 두 줄로 표시됩니다. 예: The Swan / Yo-Yo Ma
-   · 3번째(img)   : 이미지 파일명 또는 URL (선택, 기본값: violin-girl.png)
-                    PC 플레이어 + 모바일 패널 양쪽에 표시됩니다.
-
-   ※ 파싱 방식:
-      URLSearchParams 대신 href에서 직접 슬라이싱합니다.
-      %7C(인코딩된 |)를 먼저 복원한 뒤 split → 각 조각 개별 decodeURIComponent.
-      이 방식으로 & 인코딩 문제와 공백 처리 문제를 동시에 해결합니다.
-
-   ⚠️ iOS 모바일 주소창에서 직접 URL 입력 시 주의:
-      공백이 포함된 URL은 공백 위치에서 잘릴 수 있습니다.
-      직접 테스트 시에는 공백을 %20으로 인코딩해주세요.
-      예) The Swan → The%20Swan
-      티스토리 iframe src에 넣을 때는 그대로 써도 됩니다. (자동 처리됨)
+   · 트랙 구분: %7C%7C (|| 인코딩)
+   · 필드 구분: %7C  (|  인코딩)
+   · 트랙 1: 필수 / 트랙 2: 선택 (없으면 단일곡 동작)
+   · 파싱 순서: %7C%7C → 트랙 분리 → 각 트랙 내 %7C → 필드 분리
    ════════════════════════════════════════════════════════════ */
+var _href = window.location.href;
+var _qi   = _href.indexOf('?data=');
+var _raw  = _qi >= 0 ? _href.slice(_qi + 6) : '';
 
-/* ── 파라미터 파싱 ── */
-var _href  = window.location.href;
-var _qi    = _href.indexOf('?data=');
-var _raw   = _qi >= 0 ? _href.slice(_qi + 6) : '';
-/* %7C(인코딩된 |)를 먼저 복원한 뒤 split → 각 조각 개별 디코딩 */
-var parts  = _raw.replace(/%7C/gi, '|').split('|').map(function(s) {
-  try { return decodeURIComponent(s).trim(); } catch(e) { return s.trim(); }
+/* 1단계: %7C%7C → 트랙 분리 */
+var _trackRaws = _raw.split(/%7C%7C/i);
+
+/* 2단계: 각 트랙 내 %7C → 필드 분리 */
+function parseTrack(raw) {
+  var fields = raw.replace(/%7C/gi, '|').split('|').map(function(s) {
+    try { return decodeURIComponent(s).trim(); } catch(e) { return s.trim(); }
+  });
+  return {
+    src   : fields[0] || '',
+    title : fields[1] || 'Background Music',
+    img   : fields[2] || 'violin-girl.png'
+  };
+}
+
+var TRACKS = [];
+_trackRaws.forEach(function(raw) {
+  if (raw.trim()) TRACKS.push(parseTrack(raw));
 });
-var srcUrl    = parts[0] || '';
-var titleText = parts[1] || 'Background Music';
-var imgUrl    = parts[2] || 'violin-girl.png';
+if (!TRACKS.length) TRACKS.push({ src: '', title: 'Background Music', img: 'violin-girl.png' });
 
-/* ── DOM 요소 참조 ── */
+var curIdx = 0;
+
+/* ── 트랙 로드 함수 ── */
+function loadTrack(idx) {
+  curIdx = idx;
+  var t = TRACKS[idx];
+  var titleParts = t.title.split(/\s*\/\s*/);
+
+  bgm.src = t.src || '';
+  document.getElementById('trackTitle').textContent  = titleParts[0] || t.title;
+  document.getElementById('trackArtist').textContent = titleParts.slice(1).join(' / ');
+  document.getElementById('trackMini').textContent   = titleParts[0] || t.title;
+  document.getElementById('mob-title').textContent   = t.title;
+  document.getElementById('pc-img').src  = t.img;
+  document.getElementById('mob-img').src = t.img;
+
+  /* 진행바/타임코드 초기화 */
+  seekBar.value = 0; mobSeek.value = 0;
+  timeCur.textContent = '0:00'; timeDur.textContent = '-:--';
+
+  /* 트랙리스트 활성 항목 갱신 */
+  document.querySelectorAll('.track-item').forEach(function(el, i) {
+    el.classList.toggle('active', i === idx);
+  });
+}
+
+/* ── 트랙리스트 렌더링 (2트랙일 때만) ── */
+var tlEl = document.getElementById('pc-tracklist');
+if (TRACKS.length >= 2) {
+  tlEl.classList.add('show');
+  TRACKS.forEach(function(t, i) {
+    var titleParts = t.title.split(/\s*\/\s*/);
+    var item = document.createElement('div');
+    item.className = 'track-item' + (i === 0 ? ' active' : '');
+    item.innerHTML =
+      '<span class="track-num">0' + (i+1) + '</span>' +
+      '<span class="track-name">' + (titleParts[0] || t.title) + '</span>' +
+      (titleParts[1] ? '<span class="track-artist">' + titleParts.slice(1).join(' / ') + '</span>' : '');
+    item.addEventListener('click', function() {
+      if (curIdx === i) return;
+      var wasPlaying = !bgm.paused;
+      bgm.pause();
+      loadTrack(i);
+      if (wasPlaying) {
+        bgm.play().then(function() { setPlayState(true); }).catch(function(){});
+      } else {
+        setPlayState(false);
+      }
+    });
+    tlEl.appendChild(item);
+  });
+}
+
+/* ── 초기 트랙 적용 ── */
+loadTrack(0);
+
+/* ── DOM 참조 ── */
 var bgm           = document.getElementById('bgm');
 var playBtn       = document.getElementById('playBtn');
-var label         = document.getElementById('label');
+var playIcon      = document.getElementById('playIcon');
+var pauseIcon     = document.getElementById('pauseIcon');
 var volumeControl = document.getElementById('volumeControl');
+var volBtn        = document.getElementById('volBtn');
+var volPopup      = document.getElementById('vol-popup');
+var volPct        = document.getElementById('volPct');
 var seekBar       = document.getElementById('seekBar');
+var timeCur       = document.getElementById('timeCur');
+var timeDur       = document.getElementById('timeDur');
+var prevBtn       = document.getElementById('prevBtn');
+var nextBtn       = document.getElementById('nextBtn');
+var collapseBtn   = document.getElementById('collapseBtn');
 var mobToggle     = document.getElementById('mob-toggle');
 var mobPanel      = document.getElementById('mob-panel');
 var mobPlayBtn    = document.getElementById('mob-play-btn');
 var mobLabel      = document.getElementById('mob-label');
 var mobVol        = document.getElementById('mob-vol');
 var mobSeek       = document.getElementById('mob-seek');
-var mobImg        = document.getElementById('mob-img');
-var collapseBtn   = document.getElementById('collapseBtn');
-var playIcon      = document.getElementById('playIcon');
-var pauseIcon     = document.getElementById('pauseIcon');
 
-/* SVG 아이콘 전환 — 재생/일시정지 상태에 따라 교체 */
+/* ── 시간 포맷 ── */
+function fmtTime(s) {
+  if (!isFinite(s) || isNaN(s)) return '-:--';
+  return Math.floor(s/60) + ':' + ('0'+Math.floor(s%60)).slice(-2);
+}
+
+/* ── 재생 상태 전환 ── */
 function setPlayState(playing) {
   playIcon.style.display  = playing ? 'none'  : 'block';
   pauseIcon.style.display = playing ? 'block' : 'none';
-  label.textContent       = playing ? 'Pause' : 'Play';
-  /* mobToggle은 setMobPlayState에서 SVG로 처리 */
+  document.getElementById('mobBtnPlay').style.display    = playing ? 'none'  : 'block';
+  document.getElementById('mobBtnPause').style.display   = playing ? 'block' : 'none';
+  document.getElementById('mobTogglePlay').style.display  = playing ? 'none'  : 'block';
+  document.getElementById('mobTogglePause').style.display = playing ? 'block' : 'none';
+  mobLabel.textContent = playing ? 'Pause' : 'Play';
 }
 
-/* ── 파라미터 적용 ── */
-if (srcUrl) bgm.src = srcUrl;
-/* " / " → <br> 변환으로 두 줄 표시 */
-document.getElementById('trackTitle').innerHTML = titleText.replace(/\s*\/\s*/g, '<br>');
-document.getElementById('mob-title').textContent = titleText;
-document.getElementById('pc-img').src = imgUrl;
-mobImg.src = imgUrl;
+/* ── 재생/정지 토글 ── */
+function toggle() {
+  if (bgm.paused) {
+    bgm.play().then(function() {
+      setPlayState(true);
+      window.parent.postMessage({ type: 'cafe-bgm-play' }, '*');
+    }).catch(function(e) { console.error(e); });
+  } else {
+    bgm.pause();
+    setPlayState(false);
+    window.parent.postMessage({ type: 'cafe-bgm-pause' }, '*');
+  }
+}
 
-/* ════════════════════════════════════
-   접기/펼치기 + postMessage 높이 조절
+playBtn.addEventListener('click', toggle);
+mobPlayBtn.addEventListener('click', toggle);
 
-   [동작 원리]
-   1. 접기 버튼 클릭 → body.collapsed 클래스 토글
-   2. CSS가 collapsed 상태에 맞게 레이아웃 변경
-   3. postMessage로 부모 페이지(티스토리)에 새 높이 전달
-   4. 부모 페이지의 수신 스크립트가 iframe height 조절
+/* ── 볼륨 수직 팝업 ── */
+var volOpen = false;
+volBtn.addEventListener('click', function(e) {
+  e.stopPropagation();
+  volOpen = !volOpen;
+  volPopup.classList.toggle('open', volOpen);
+});
+document.addEventListener('click', function(e) {
+  if (volOpen && !volPopup.contains(e.target) && e.target !== volBtn && !volBtn.contains(e.target)) {
+    volOpen = false; volPopup.classList.remove('open');
+  }
+});
+volumeControl.addEventListener('input', function() {
+  bgm.volume = this.value;
+  mobVol.value = this.value;
+  volPct.textContent = Math.round(this.value * 100) + '%';
+});
+mobVol.addEventListener('input', function() {
+  bgm.volume = this.value;
+  volumeControl.value = this.value;
+  volPct.textContent = Math.round(this.value * 100) + '%';
+});
 
-   [높이 값]
-   · 펼친 상태: 450px (이미지 + 제목 + 컨트롤 전체)
-   · 접힌 상태:  64px (재생 버튼 + 곡 제목만)
-   ════════════════════════════════════ */
-var HEIGHT_EXPANDED  = 450; /* 펼친 상태 높이 (px) */
-var HEIGHT_COLLAPSED =  64; /* 접힌 상태 높이 (px) */
+/* ── 진행바 ── */
+seekBar.addEventListener('input', function() {
+  if (bgm.duration) bgm.currentTime = (this.value/100) * bgm.duration;
+});
+mobSeek.addEventListener('input', function() {
+  if (bgm.duration) bgm.currentTime = (this.value/100) * bgm.duration;
+});
 
-/* 부모 페이지에 높이 변경 요청 메시지 전송 */
+/* ── 이전/다음 버튼 ── */
+prevBtn.addEventListener('click', function() {
+  if (TRACKS.length < 2) { bgm.currentTime = 0; return; }
+  var wasPlaying = !bgm.paused;
+  bgm.pause();
+  loadTrack(curIdx === 0 ? TRACKS.length - 1 : curIdx - 1);
+  if (wasPlaying) bgm.play().then(function(){ setPlayState(true); }).catch(function(){});
+  else setPlayState(false);
+});
+nextBtn.addEventListener('click', function() {
+  if (TRACKS.length < 2) { bgm.currentTime = 0; return; }
+  var wasPlaying = !bgm.paused;
+  bgm.pause();
+  loadTrack(curIdx === TRACKS.length - 1 ? 0 : curIdx + 1);
+  if (wasPlaying) bgm.play().then(function(){ setPlayState(true); }).catch(function(){});
+  else setPlayState(false);
+});
+
+/* ── 타임코드 + 진행바 업데이트 ── */
+bgm.addEventListener('loadedmetadata', function() {
+  timeDur.textContent = fmtTime(bgm.duration);
+});
+bgm.addEventListener('timeupdate', function() {
+  if (bgm.duration) {
+    var pct = (bgm.currentTime / bgm.duration) * 100;
+    seekBar.value = pct;
+    mobSeek.value = pct;
+    timeCur.textContent = fmtTime(bgm.currentTime);
+    timeDur.textContent = fmtTime(bgm.duration);
+  }
+});
+
+/* ── 접기/펼치기 ── */
+var HEIGHT_EXPANDED  = TRACKS.length >= 2 ? 530 : 480;
+var HEIGHT_COLLAPSED = 64;
+
 function notifyHeight(h) {
-  /* '*' — 모든 origin 허용 (티스토리 도메인 고정 불필요) */
   window.parent.postMessage({ type: 'bgm-resize', height: h }, '*');
 }
 
-/* 접기/펼치기 상태 변수 */
 var collapsed = false;
-
-collapseBtn.addEventListener('click', function () {
+collapseBtn.addEventListener('click', function() {
   collapsed = !collapsed;
-  /* body에 collapsed 클래스 추가/제거 → CSS가 레이아웃 전환 */
   document.body.classList.toggle('collapsed', collapsed);
-  /* 버튼 아이콘 전환: 펼침=∨, 접힘=∧ */
   collapseBtn.textContent = collapsed ? '∧' : '∨';
-  /* 부모에게 새 높이 전달 */
   notifyHeight(collapsed ? HEIGHT_COLLAPSED : HEIGHT_EXPANDED);
 });
 
-/* 페이지 로드 완료 후 초기 높이를 부모에게 전달
-   (DOMContentLoaded 전 호출 시 iframe이 준비 안 된 경우 방지) */
 window.addEventListener('load', function() {
   notifyHeight(HEIGHT_EXPANDED);
 });
 
-/* ════════════════════════════════════
-   모바일 감지
-
-   CSS 미디어 쿼리 대신 JS로 감지하는 이유:
-   iframe 내부에서 CSS 미디어 쿼리가 iframe 너비가 아닌
-   부모 페이지 viewport를 기준으로 작동하는 오류가 있어
-   window.screen.width (기기 실제 화면 너비)로 직접 판별합니다.
-   768px 이하 → 모바일, 초과 → PC
-   ════════════════════════════════════ */
+/* ── 모바일 감지 ── */
+var panelOpen = false;
 function checkMobile() {
   if (window.screen.width <= 768) {
     document.body.classList.add('mobile');
   } else {
     document.body.classList.remove('mobile');
-    /* PC 전환 시 열려있던 모바일 패널 닫기 */
     panelOpen = false;
     mobPanel.classList.remove('open');
   }
@@ -701,89 +703,12 @@ function checkMobile() {
 checkMobile();
 window.addEventListener('resize', checkMobile);
 
-/* ════════════════════════════════════
-   PC 재생 컨트롤
-   ════════════════════════════════════ */
-playBtn.addEventListener('click', function () {
-  if (bgm.paused) {
-    bgm.play().then(function () {
-      setPlayState(true);
-      window.parent.postMessage({ type: 'cafe-bgm-play' }, '*');
-    }).catch(function (e) { console.error(e); });
-  } else {
-    bgm.pause();
-    setPlayState(false);
-    window.parent.postMessage({ type: 'cafe-bgm-pause' }, '*');
-  }
-});
-
-/* 볼륨 슬라이더 */
-volumeControl.addEventListener('input', function () { bgm.volume = this.value; });
-
-/* 시크(재생 위치) 슬라이더 */
-seekBar.addEventListener('input', function () {
-  if (bgm.duration) bgm.currentTime = (this.value / 100) * bgm.duration;
-});
-
-/* ════════════════════════════════════
-   모바일 재생 컨트롤
-   ════════════════════════════════════ */
-var panelOpen = false;
-
-/* 재생 상태에 따라 모바일 버튼 UI 업데이트 */
-function setMobPlayState(playing) {
-  /* 모바일 패널 버튼 SVG 전환 */
-  document.getElementById('mobBtnPlay').style.display  = playing ? 'none'  : 'block';
-  document.getElementById('mobBtnPause').style.display = playing ? 'block' : 'none';
-  /* 플로팅 버튼 SVG 전환 */
-  document.getElementById('mobTogglePlay').style.display  = playing ? 'none'  : 'block';
-  document.getElementById('mobTogglePause').style.display = playing ? 'block' : 'none';
-  mobLabel.textContent = playing ? 'Pause' : 'Play';
-}
-
-/* 플로팅 버튼 클릭 → 패널 열기/닫기 */
-mobToggle.addEventListener('click', function () {
+/* ── 모바일 패널 ── */
+mobToggle.addEventListener('click', function() {
   panelOpen = !panelOpen;
   mobPanel.classList.toggle('open', panelOpen);
 });
-
-/* 패널 재생 버튼 */
-mobPlayBtn.addEventListener('click', function () {
-  if (bgm.paused) {
-    bgm.play().then(function () {
-      setMobPlayState(true);
-      window.parent.postMessage({ type: 'cafe-bgm-play' }, '*');
-    }).catch(function (e) { console.error(e); });
-  } else {
-    bgm.pause();
-    setMobPlayState(false);
-    window.parent.postMessage({ type: 'cafe-bgm-pause' }, '*');
-  }
-});
-
-/* 모바일 볼륨/시크 슬라이더 */
-mobVol.addEventListener('input', function () { bgm.volume = this.value; });
-mobSeek.addEventListener('input', function () {
-  if (bgm.duration) bgm.currentTime = (this.value / 100) * bgm.duration;
-});
-
-/* ════════════════════════════════════
-   공용: 재생 시간 업데이트
-   PC와 모바일 시크바를 동시에 업데이트합니다.
-   ════════════════════════════════════ */
-bgm.addEventListener('timeupdate', function () {
-  if (bgm.duration) {
-    var pct = (bgm.currentTime / bgm.duration) * 100;
-    seekBar.value = pct;
-    mobSeek.value = pct;
-  }
-});
-
-/* ════════════════════════════════════
-   모바일 패널 외부 클릭 시 자동 닫기
-   패널과 플로팅 버튼 외의 영역 클릭 감지
-   ════════════════════════════════════ */
-document.addEventListener('click', function (e) {
+document.addEventListener('click', function(e) {
   if (panelOpen && !mobPanel.contains(e.target) && e.target !== mobToggle) {
     panelOpen = false;
     mobPanel.classList.remove('open');
