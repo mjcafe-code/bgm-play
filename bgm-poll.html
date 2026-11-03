@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BGM Poll</title>
+
+<!--
+  ════════════════════════════════════════════════════════════
+  MJ BGM Poll v1.0 — 포스트 안의 BGM 선호도 투표
+  작성: Hanrim (Cozy Shelter)
+  작성일: 2026-11-03
+  ────────────────────────────────────────────────────────────
+  1. 하는 일
+  ────────────────────────────────────────────────────────────
+  - 포스트의 BGM 트랙 중 어떤 곡이 좋은지 묻고, 투표를 받습니다.
+  - 투표한 뒤에는 결과를 파이 차트 + 비율(%)로 보여줍니다.
+  - 응답자 수는 화면에 표시하지 않습니다. (서버도 비율만 돌려줍니다)
+  - 표가 MIN_VOTES(poll-api.gs) 미만이면 "모으는 중" 안내만 보여줍니다.
+  - 트랙이 1곡이면 아무것도 표시하지 않고 높이 0으로 숨습니다.
+  - 같은 브라우저에서는 한 번만 투표할 수 있습니다.
+
+  ────────────────────────────────────────────────────────────
+  2. 사용법 — 플레이어와 같은 data 값을 그대로 씁니다
+  ────────────────────────────────────────────────────────────
+    bgm-poll.html?post=252&q=질문&data=(bgm-player-MT.html과 같은 data)
+
+    - post : 티스토리 포스트 번호 (글마다 투표가 따로 집계됨) — 필수
+    - q    : 질문 문구 (선택, 비우면 DEFAULT_QUESTION)
+    - data : 반드시 맨 마지막에. 플레이어 data를 그대로 복사
+    - 티스토리 에디터가 & 를 &amp; 로 바꿔도 정상 동작합니다.
+
+  ────────────────────────────────────────────────────────────
+  3. 부모 페이지 연동 메시지
+  ────────────────────────────────────────────────────────────
+    높이 변경: { type: 'mj-poll-resize', height: number }
+    (플레이어의 'bgm-resize'와 이름을 다르게 해서 서로 간섭하지 않음)
+  ════════════════════════════════════════════════════════════
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --cream:    #faf6f0;
+    --panel:    #f3ede6;
+    --coffee:   #6b4226;
+    --coffee2:  #7a5545;
+    --espresso: #3b1f0e;
+    --latte:    #9c7a66;
+    --mist:     #e2d8ce;
+    --line:     rgba(59,31,14,.10);
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--espresso);
+    font-family: 'Lato', sans-serif;
+    overflow: hidden;
+  }
+
+  button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
+
+  #poll {
+    display: none;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 22px 22px 20px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(59,31,14,.08);
+  }
+  #poll.show { display: block; }
+
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    color: var(--latte);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  #question {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.45;
+    text-align: center;
+    margin: 0 0 18px;
+    word-break: keep-all;
+  }
+
+  /* ── 선택지 ─────────────────────────────────────────────── */
+  .options { display: flex; flex-direction: column; gap: 8px; }
+
+  .opt {
+    display: grid;
+    grid-template-columns: 26px 1fr 18px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    text-align: left;
+    color: var(--espresso);
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+  .opt:hover  { border-color: rgba(107,66,38,.35); }
+  .opt:active { transform: scale(.99); }
+  .opt.selected { border-color: var(--coffee2); background: rgba(122,85,69,.06); }
+
+  .opt-num {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: rgba(62,39,35,.30);
+    text-align: right;
+  }
+  .opt-meta  { min-width: 0; }
+  .opt-title {
+    display: block;
+    font-size: 14px;
+    line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .opt-artist {
+    display: block;
+    margin-top: 2px;
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-style: italic;
+    color: rgba(59,31,14,.55);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .opt-radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--mist);
+    position: relative;
+  }
+  .opt.selected .opt-radio { border-color: var(--coffee2); }
+  .opt.selected .opt-radio::after {
+    content: '';
+    position: absolute; inset: 3px;
+    border-radius: 50%;
+    background: var(--coffee2);
+  }
+
+  #vote-btn {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--coffee2);
+    color: var(--cream);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition: background .15s ease, opacity .15s ease;
+  }
+  #vote-btn:hover:not([disabled]) { background: var(--coffee); }
+  #vote-btn[disabled] { opacity: .35; cursor: default; }
+
+  /* ── 결과 ───────────────────────────────────────────────── */
+  #result { display: none; }
+  #result.show { display: block; }
+
+  .result-wrap {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+
+  #pie {
+    width: 132px;
+    height: 132px;
+    flex-shrink: 0;
+    transform: rotate(-90deg);
+    border-radius: 50%;
+  }
+  #pie circle { transition: stroke-dasharray .9s cubic-bezier(.4,0,.2,1); }
+
+  .legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+
+  .lg-row {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    align-items: center;
+    gap: 9px;
+  }
+  .lg-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .lg-name {
+    font-size: 13px;
+    line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lg-mine {
+    display: inline-block;
+    margin-left: 5px;
+    padding: 1px 6px;
+    border-radius: 99px;
+    background: rgba(122,85,69,.12);
+    color: var(--coffee);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    vertical-align: 1px;
+  }
+  .lg-pct {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--espresso);
+  }
+
+  .pending {
+    text-align: center;
+    padding: 6px 4px 2px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: rgba(59,31,14,.75);
+    word-break: keep-all;
+  }
+  .pending strong { color: var(--coffee); font-weight: 700; }
+
+  .foot {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    font-size: 11.5px;
+    color: rgba(59,31,14,.50);
+    word-break: keep-all;
+  }
+
+  .msg {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 12px;
+    color: #9a4a3a;
+    min-height: 0;
+  }
+
+  @media (max-width: 360px) {
+    #poll { padding: 18px 16px 16px; }
+    .result-wrap { flex-direction: column; gap: 16px; }
+    .legend { width: 100%; }
+  }
+</style>
+</head>
+
+<body>
+
+<div id="poll" aria-live="polite">
+  <div class="eyebrow">BGM POLL</div>
+  <h2 id="question"></h2>
+
+  <!-- 투표 화면 -->
+  <div id="ballot">
+    <div class="options" id="options" role="radiogroup"></div>
+    <button id="vote-btn" type="button" disabled>투표하기</button>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="result"></div>
+
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ════════════════════════════════════════════════════════════
+     1. Config
+     ════════════════════════════════════════════════════════════ */
+
+  /* poll-api.gs 를 웹 앱으로 배포한 뒤 받은 URL(…/exec)을 붙여넣으세요 */
+  var API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSw921WZhkH4DbzXWcVPBlrvyizMCmFEVV6qc6asBWgtVkAIUIAkstbbw98C3Qc5C_tCjYSvwVWouJ_CvRS4Fd8tL16XLxtjq0lSq8L_5QGJacWFBJnYcsMVxG4AHqYIeXe5RhFbI3j9Q4Kc3gSYLxVCStouvjIIqLQPNUXbim3sLiuPM2Z_5htlkvTKO6WTx_QPVsUKX5pkV6MqppNwfY-9M-DCtfTv8vlbHQALU-EPwCzB9tXV0Fy1BcMorbEwsYEnKt9zp5ArjNiSrWMiDQSiG2Mwr1wjuGdvNQ4hpMYOk0hetmcG1428GBeLg&lib=Mh_Q7NSPfAiWd6caviBSK1jIEzPXCQfRW';
+
+  var DEFAULT_QUESTION = '이 글과 가장 잘 어울리는 곡은 무엇인가요?';
+  var DEFAULT_TITLE    = 'Background Music';
+
+  /* 파이 조각 색상 (블로그 팔레트) */
+  var COLORS = ['#6b4226', '#c4956a', '#8a9a7b', '#3b1f0e', '#d9c3a5', '#a86b52'];
+
+  var STORE_PREFIX = 'mj-bgm-poll:';
+
+  /* ════════════════════════════════════════════════════════════
+     2. DOM / State
+     ════════════════════════════════════════════════════════════ */
+
+  var el = {
+    poll:     document.getElementById('poll'),
+    question: document.getElementById('question'),
+    ballot:   document.getElementById('ballot'),
+    options:  document.getElementById('options'),
+    voteBtn:  document.getElementById('vote-btn'),
+    result:   document.getElementById('result'),
+    msg:      document.getElementById('msg')
+  };
+
+  var state = { post: '', tracks: [], selected: -1, mine: -1, busy: false };
+
+  /* ════════════════════════════════════════════════════════════
+     3. Utility
+     ════════════════════════════════════════════════════════════ */
+
+  function safeDecode(v) {
+    try { return decodeURIComponent(v); } catch (e) { return v; }
+  }
+
+  function escapeHtml(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* 저장소는 막혀 있을 수 있으므로(사파리 등) 항상 try/catch */
+  function store(key, value) {
+    try {
+      if (value === undefined) return localStorage.getItem(STORE_PREFIX + key);
+      localStorage.setItem(STORE_PREFIX + key, value);
+    } catch (e) { return null; }
+  }
+
+  function voterId() {
+    var id = store('voter');
+    if (!id) {
+      id = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+      store('voter', id);
+    }
+    return id;
+  }
+
+  function notifyHeight() {
+    var h = el.poll.classList.contains('show')
+      ? Math.ceil(el.poll.getBoundingClientRect().height) + 2
+      : 0;
+    window.parent.postMessage({ type: 'mj-poll-resize', height: h }, '*');
+  }
+
+  function setMsg(text) {
+    el.msg.textContent = text || '';
+    notifyHeight();
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     4. Parser — 플레이어와 같은 data 형식을 읽습니다
+        ?post=252&q=질문&data=음악|제목 / 아티스트|이미지||음악2|...
+     ════════════════════════════════════════════════════════════ */
+
+  function parseUrl() {
+    var href = location.href.replace(/&amp;/gi, '&');
+    var hash = href.indexOf('#');
+    if (hash >= 0) href = href.slice(0, hash);
+
+    var qs = href.indexOf('?') >= 0 ? href.slice(href.indexOf('?') + 1) : '';
+
+    /* data는 맨 끝 — 그 앞부분에서만 post, q를 찾습니다 */
+    var dataAt = qs.search(/(^|&)data=/);
+    var head = dataAt >= 0 ? qs.slice(0, dataAt) : qs;
+    var data = dataAt >= 0 ? qs.slice(dataAt).replace(/^&?data=/, '') : '';
+
+    function param(name) {
+      var m = head.match(new RegExp('(?:^|&)' + name + '=([^&]*)'));
+      return m ? safeDecode(m[1].replace(/\+/g, ' ')).trim() : '';
+    }
+
+    return { post: param('post'), q: param('q'), tracks: parseTracks(data) };
+  }
+
+  function parseTracks(raw) {
+    if (!raw) return [];
+    return raw.replace(/%7C/gi, '|').split('||')
+      .filter(function(t) { return t && t.trim(); })
+      .map(function(t) {
+        var fields = t.split('|').map(function(f) { return safeDecode(f).trim(); });
+        var text   = safeDecode(fields[1] || DEFAULT_TITLE).trim() || DEFAULT_TITLE;
+        var parts  = text.split(/\s*\/\s*/);
+        return { title: parts[0] || text, artist: parts.slice(1).join(' / ') };
+      });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     5. API
+     ════════════════════════════════════════════════════════════ */
+
+  function api(params) {
+    var url = API_URL + '?' + Object.keys(params).map(function(k) {
+      return k + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+
+    return fetch(url, { method: 'GET', redirect: 'follow' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d || !d.ok) throw new Error((d && d.error) || 'error');
+        return d;
+      });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     6. Render — 투표 화면
+     ════════════════════════════════════════════════════════════ */
+
+  function renderBallot() {
+    el.options.innerHTML = '';
+
+    state.tracks.forEach(function(t, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', 'false');
+      b.innerHTML =
+        '<span class="opt-num">' + String(i + 1).padStart(2, '0') + '</span>' +
+        '<span class="opt-meta">' +
+          '<span class="opt-title">' + escapeHtml(t.title) + '</span>' +
+          (t.artist ? '<span class="opt-artist">' + escapeHtml(t.artist) + '</span>' : '') +
+        '</span>' +
+        '<span class="opt-radio"></span>';
+
+      b.addEventListener('click', function() {
+        state.selected = i;
+        Array.prototype.forEach.call(el.options.children, function(c, j) {
+          c.classList.toggle('selected', j === i);
+          c.setAttribute('aria-checked', j === i ? 'true' : 'false');
+        });
+        el.voteBtn.disabled = false;
+      });
+
+      el.options.appendChild(b);
+    });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     7. Render — 결과 화면 (파이 차트 + 비율)
+        stroke-dasharray 트릭: 반지름 25 원에 굵기 50 선 → 꽉 찬 파이
+     ════════════════════════════════════════════════════════════ */
+
+  function renderResult(data) {
+    el.ballot.style.display = 'none';
+    el.result.classList.add('show');
+
+    var mine = state.mine;
+    var mineName = mine >= 0 && state.tracks[mine] ? state.tracks[mine].title : '';
+
+    if (!data.ready) {
+      el.result.innerHTML =
+        '<div class="pending">' +
+          (mineName ? '<strong>' + escapeHtml(mineName) + '</strong>에 한 표를 주셨어요.<br>' : '') +
+          '아직 결과를 모으는 중이에요.<br>조금 더 모이면 비율이 공개돼요.' +
+        '</div>' +
+        '<div class="foot">함께해 주셔서 고맙습니다</div>';
+      notifyHeight();
+      return;
+    }
+
+    var C = 2 * Math.PI * 25;
+    var circles = '';
+    var legend  = '';
+    var offset  = 0;
+
+    data.pct.forEach(function(p, i) {
+      var color = COLORS[i % COLORS.length];
+      var len   = C * p / 100;
+
+      if (p > 0) {
+        circles +=
+          '<circle cx="50" cy="50" r="25" fill="none" stroke="' + color + '" stroke-width="50"' +
+          ' stroke-dasharray="0 ' + C + '" data-len="' + len + '"' +
+          ' stroke-dashoffset="' + (-offset) + '"></circle>';
+      }
+      offset += len;
+
+      legend +=
+        '<div class="lg-row">' +
+          '<span class="lg-dot" style="background:' + color + '"></span>' +
+          '<span class="lg-name">' + escapeHtml(state.tracks[i] ? state.tracks[i].title : '') +
+            (i === mine ? '<span class="lg-mine">내 선택</span>' : '') +
+          '</span>' +
+          '<span class="lg-pct">' + p + '%</span>' +
+        '</div>';
+    });
+
+    el.result.innerHTML =
+      '<div class="result-wrap">' +
+        '<svg id="pie" viewBox="0 0 100 100" role="img" aria-label="투표 결과 파이 차트">' +
+          '<circle cx="50" cy="50" r="50" fill="#e2d8ce"></circle>' +
+          circles +
+        '</svg>' +
+        '<div class="legend">' + legend + '</div>' +
+      '</div>' +
+      '<div class="foot">함께해 주셔서 고맙습니다</div>';
+
+    notifyHeight();
+
+    /* 다음 프레임에서 조각을 펼쳐 애니메이션 */
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        Array.prototype.forEach.call(el.result.querySelectorAll('circle[data-len]'), function(c) {
+          c.setAttribute('stroke-dasharray', c.getAttribute('data-len') + ' ' + C);
+        });
+      });
+    });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     8. Actions
+     ════════════════════════════════════════════════════════════ */
+
+  function loadResults() {
+    setMsg('');
+    api({ action: 'results', post: state.post, n: state.tracks.length })
+      .then(renderResult)
+      .catch(function() { setMsg('결과를 불러오지 못했어요. 잠시 후 다시 들러 주세요.'); });
+  }
+
+  function vote() {
+    if (state.busy || state.selected < 0) return;
+    state.busy = true;
+    el.voteBtn.disabled = true;
+    el.voteBtn.textContent = '보내는 중…';
+    setMsg('');
+
+    api({
+      action: 'vote',
+      post:   state.post,
+      n:      state.tracks.length,
+      choice: state.selected,
+      voter:  voterId()
+    })
+      .then(function(d) {
+        state.mine = state.selected;
+        store('voted:' + state.post + ':' + state.tracks.length, String(state.selected));
+        renderResult(d);
+      })
+      .catch(function() {
+        el.voteBtn.disabled = false;
+        el.voteBtn.textContent = '투표하기';
+        setMsg('투표를 보내지 못했어요. 잠시 후 다시 눌러 주세요.');
+      })
+      .then(function() { state.busy = false; });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     9. Init
+     ════════════════════════════════════════════════════════════ */
+
+  function init() {
+    var cfg = parseUrl();
+    state.post   = cfg.post;
+    state.tracks = cfg.tracks;
+
+    /* 1곡 이하면 표시하지 않음 */
+    if (state.tracks.length < 2) { notifyHeight(); return; }
+
+    el.poll.classList.add('show');
+    el.question.textContent = cfg.q || DEFAULT_QUESTION;
+
+    if (!/^[A-Za-z0-9_-]{1,40}$/.test(state.post)) {
+      el.ballot.style.display = 'none';
+      setMsg('포스트 번호(post=)가 없어요. 생성기에서 코드를 다시 만들어 주세요.');
+      return;
+    }
+    if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(API_URL)) {
+      el.ballot.style.display = 'none';
+      setMsg('API_URL이 설정되지 않았어요. bgm-poll.html 상단을 확인해 주세요.');
+      return;
+    }
+
+    renderBallot();
+    el.voteBtn.addEventListener('click', vote);
+
+    var prev = store('voted:' + state.post + ':' + state.tracks.length);
+    if (prev !== null && prev !== '' && !isNaN(prev)) {
+      state.mine = Number(prev);
+      loadResults();
+    }
+
+    notifyHeight();
+  }
+
+  if (window.ResizeObserver) new ResizeObserver(notifyHeight).observe(document.body);
+  window.addEventListener('load', notifyHeight);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(notifyHeight);
+
+  init();
+
+  window.MJ_BGM_POLL = { version: '1.0', state: state };
+})();
+</script>
+
+</body>
+</html>
