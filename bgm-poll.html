@@ -290,7 +290,9 @@
      ════════════════════════════════════════════════════════════ */
 
   /* poll-api.gs 를 웹 앱으로 배포한 뒤 받은 URL(…/exec)을 붙여넣으세요 */
-  var API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSw921WZhkH4DbzXWcVPBlrvyizMCmFEVV6qc6asBWgtVkAIUIAkstbbw98C3Qc5C_tCjYSvwVWouJ_CvRS4Fd8tL16XLxtjq0lSq8L_5QGJacWFBJnYcsMVxG4AHqYIeXe5RhFbI3j9Q4Kc3gSYLxVCStouvjIIqLQPNUXbim3sLiuPM2Z_5htlkvTKO6WTx_QPVsUKX5pkV6MqppNwfY-9M-DCtfTv8vlbHQALU-EPwCzB9tXV0Fy1BcMorbEwsYEnKt9zp5ArjNiSrWMiDQSiG2Mwr1wjuGdvNQ4hpMYOk0hetmcG1428GBeLg&lib=Mh_Q7NSPfAiWd6caviBSK1jIEzPXCQfRW';
+  /* ※ 반드시 배포 화면의 '웹 앱 URL' (https://script.google.com/macros/s/…/exec) 을 넣으세요.
+     브라우저 주소창에 나타나는 script.googleusercontent.com/…/echo?… 주소는 임시 주소라 쓰면 안 됩니다. */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzAowEvlN6E_EkOTSXkDlwlD8MLApOoC7tK8W7CV_KYm8uOYs2iIOcaY5MPEQc3h1wF/exec';
 
   var DEFAULT_QUESTION = '이 글과 가장 잘 어울리는 곡은 무엇인가요?';
   var DEFAULT_TITLE    = 'Background Music';
@@ -401,7 +403,7 @@
      ════════════════════════════════════════════════════════════ */
 
   function api(params) {
-    var url = API_URL + '?' + Object.keys(params).map(function(k) {
+    var url = API_URL + (API_URL.indexOf('?') >= 0 ? '&' : '?') + Object.keys(params).map(function(k) {
       return k + '=' + encodeURIComponent(params[k]);
     }).join('&');
 
@@ -577,7 +579,7 @@
       setMsg('포스트 번호(post=)가 없어요. 생성기에서 코드를 다시 만들어 주세요.');
       return;
     }
-    if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(API_URL)) {
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(API_URL)) {
       el.ballot.style.display = 'none';
       setMsg('API_URL이 설정되지 않았어요. bgm-poll.html 상단을 확인해 주세요.');
       return;
