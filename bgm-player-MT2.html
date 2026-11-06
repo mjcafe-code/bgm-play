@@ -7,7 +7,8 @@
 
 <!--
   ════════════════════════════════════════════════════════════
-  MJ BGM Player — MT2 (Multi-Track 2nd) Version v2.0
+  MJ BGM Player — MT2 (Multi-Track 2nd) Version v2.0.1
+  v2.0.1: 두 번째 커버 레이어에 크기 지정 누락 → 큰 이미지가 잘려 보이던 문제 수정
   기반: bgm-player-MT.html v1.1  (MT는 그대로 두고 새 파일로 분리)
   v2.0 추가:
     - 재생 방식 2가지: 🔂 한 곡 반복 / 🔁 전체 재생 (재생 중 바꿔도 끊기지 않음)
@@ -780,6 +781,10 @@
   #cover-wrap { position: relative; }
   #cover-wrap img {
     position: absolute; inset: 0;
+    width: 100%; height: 100%;      /* 큰 원본도 270×270에 맞춤 (v2.0.1) */
+    object-fit: cover;
+    object-position: center;
+    display: block;
     opacity: 0;
     transition: opacity .9s ease;
   }
@@ -1997,7 +2002,7 @@
       window.MJ_BGM_MT.resolveUrl('test.m4a')
   */
   window.MJ_BGM_MT = {
-    version: '2.0 (MT2)',
+    version: '2.0.1 (MT2)',
     baseUrl: BASE_URL,
     tracks: state.tracks,
     state: state,
