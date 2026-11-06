@@ -7,7 +7,9 @@
 
 <!--
   ════════════════════════════════════════════════════════════
-  MJ BGM Player — MT (Multi-Track) Version v1.1
+  MJ BGM Player — MT (Multi-Track) Version v1.1.1
+  v1.1.1: 높이 알림 보강 (MT2 v2.0.2와 같은 수정) — 숨김 상태의 0 높이는 보내지 않고,
+          플레이어가 보이는 순간·곡명 줄바꿈 시 실제 높이를 다시 알림 (3곡 이상에서 '닫기' 잘림 해결)
   기반: bgm-player-TT.html v1.0 (TT = Two-Track)
   v1.1 변경: 3곡 이상 대응, 모바일 패널에 이전/다음 버튼과 트랙리스트 추가,
              패널이 열리면 플로팅 버튼 숨김, 손잡이를 눌러 패널 닫기
@@ -1060,6 +1062,7 @@
     기존 cafe-ver와 동일한 bgm-resize postMessage 구조를 유지합니다.
   */
   function notifyHeight(height) {
+    if (!height) return;   /* v1.1.1: 숨김 상태의 0 높이는 보내지 않음 */
     window.parent.postMessage({ type: 'bgm-resize', height: height }, '*');
   }
 
@@ -1705,6 +1708,16 @@
     loadTrack(0);
     checkMobile();
     notifyHeight(desiredHeight());
+
+    /* v1.1.1: 실제 높이가 바뀔 때마다 다시 알림 (보이는 순간, 글꼴 로드 후 곡명 줄바꿈 등) */
+    var lastSent = 0;
+    function syncHeight() {
+      var h = desiredHeight();
+      if (h && h !== lastSent) { lastSent = h; notifyHeight(h); }
+    }
+    if (window.ResizeObserver) new ResizeObserver(syncHeight).observe(document.getElementById('mjp'));
+    window.addEventListener('resize', syncHeight);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeight);
   }
 
   init();
@@ -1718,7 +1731,7 @@
       window.MJ_BGM_MT.resolveUrl('test.m4a')
   */
   window.MJ_BGM_MT = {
-    version: '1.1',
+    version: '1.1.1',
     baseUrl: BASE_URL,
     tracks: state.tracks,
     resolveUrl: resolveUrl
