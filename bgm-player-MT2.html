@@ -7,8 +7,9 @@
 
 <!--
   ════════════════════════════════════════════════════════════
-  MJ BGM Player — MT2 (Multi-Track 2nd) Version v2.0.1
+  MJ BGM Player — MT2 (Multi-Track 2nd) Version v2.0.2
   v2.0.1: 두 번째 커버 레이어에 크기 지정 누락 → 큰 이미지가 잘려 보이던 문제 수정
+  v2.0.2: 높이 알림 보강 — 숨김 상태의 0 높이는 보내지 않고, 보이는 순간·곡명 줄바꿈 시 다시 알림
   기반: bgm-player-MT.html v1.1  (MT는 그대로 두고 새 파일로 분리)
   v2.0 추가:
     - 재생 방식 2가지: 🔂 한 곡 반복 / 🔁 전체 재생 (재생 중 바꿔도 끊기지 않음)
@@ -1151,6 +1152,8 @@
     기존 cafe-ver와 동일한 bgm-resize postMessage 구조를 유지합니다.
   */
   function notifyHeight(height) {
+    /* v2.0.2: 플레이어가 아직 숨겨져 있을 때(스크롤 전)는 높이가 0으로 재어짐 → 보내지 않음 */
+    if (!height) return;
     window.parent.postMessage({ type: 'bgm-resize', height: height }, '*');
   }
 
@@ -1989,6 +1992,19 @@
     preloadCovers();
     startIdleRotate();
     notifyHeight(desiredHeight());
+
+    /* v2.0.2: 실제 높이가 바뀔 때마다 다시 알림
+       - 스크롤해서 플레이어가 처음 보이는 순간 (그 전엔 0)
+       - 글꼴이 늦게 로드되어 긴 곡명이 두 줄로 바뀔 때
+       - 커버 순환으로 곡명 줄 수가 달라질 때 */
+    var lastSent = 0;
+    function syncHeight() {
+      var h = desiredHeight();
+      if (h && h !== lastSent) { lastSent = h; notifyHeight(h); }
+    }
+    if (window.ResizeObserver) new ResizeObserver(syncHeight).observe(document.getElementById('mjp'));
+    window.addEventListener('resize', syncHeight);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeight);
   }
 
   init();
@@ -2002,7 +2018,7 @@
       window.MJ_BGM_MT.resolveUrl('test.m4a')
   */
   window.MJ_BGM_MT = {
-    version: '2.0.1 (MT2)',
+    version: '2.0.2 (MT2)',
     baseUrl: BASE_URL,
     tracks: state.tracks,
     state: state,
