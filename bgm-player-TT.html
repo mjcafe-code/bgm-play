@@ -7,7 +7,9 @@
 
 <!--
   ════════════════════════════════════════════════════════════
-  MJ BGM Player — TT Version v1.0
+  MJ BGM Player — TT Version v1.1
+  v1.1: 모바일에서 투명 iframe이 본문 터치를 막던 문제 수정 (버튼 크기로 줄였다가 패널 열 때만 펼침),
+        PC 높이 알림 보강, 패널 손잡이로 닫기
   작성: Hanrim (Cozy Shelter) / Lumi
   작성일: 2026-06-27
   ────────────────────────────────────────────────────────────
@@ -585,8 +587,8 @@
 
   body.mobile #mob-toggle {
     position: fixed;
-    right: 18px;
-    bottom: 72px;
+    right: 12px;      /* 모바일: iframe이 버튼 크기(72px)로 줄어들므로 안쪽 여백만 둠 */
+    bottom: 12px;
     display: flex;
     width: 48px;
     height: 48px;
@@ -691,6 +693,16 @@
 
   #mob-seek {
     flex: 1;
+  }
+
+  /* v1.1: 패널이 열리면 플로팅 버튼 숨김 / 손잡이 터치 영역 확대 */
+  body.mobile.panel-open #mob-toggle { display: none; }
+  #mob-handle {
+    cursor: pointer;
+    background-clip: content-box;
+    padding: 8px 0;
+    margin-top: -8px;
+    height: 19px;
   }
 </style>
 </head>
@@ -1003,6 +1015,8 @@
     기존 cafe-ver와 동일한 bgm-resize postMessage 구조를 유지합니다.
   */
   function notifyHeight(height) {
+    if (!height) return;                                         /* v1.1: 숨김 상태의 0 높이는 보내지 않음 */
+    if (document.body.classList.contains('mobile')) return;      /* v1.1: 모바일은 bgm-mobile 메시지로 처리 */
     window.parent.postMessage({ type: 'bgm-resize', height: height }, '*');
   }
 
@@ -1444,13 +1458,34 @@
     iframe 내부 CSS 미디어쿼리 대신 window.screen.width를 기준으로
     모바일 여부를 판단합니다.
   */
+  /* ── 모바일: 부모(스킨)에 "버튼만 / 패널 열림" 상태 알림 (투명 iframe이 본문 터치를 막지 않도록) ── */
+  var mobTimer = null;
+  function isMobileMode() { return document.body.classList.contains('mobile'); }
+  function postMobile(open) {
+    if (!isMobileMode()) return;
+    var h = open ? Math.ceil(el.mobPanel.getBoundingClientRect().height) : 0;
+    window.parent.postMessage({ type: 'bgm-mobile', open: !!open, height: h }, '*');
+  }
+  function setMobilePanel(open) {
+    open = !!open;
+    state.mobilePanelOpen = open;
+    clearTimeout(mobTimer);
+    document.body.classList.toggle('panel-open', open);
+    if (open) {
+      postMobile(true);                       /* 부모가 iframe을 먼저 화면 폭으로 넓힘 */
+      mobTimer = setTimeout(function() { el.mobPanel.classList.add('open'); }, 60);
+    } else {
+      el.mobPanel.classList.remove('open');
+      mobTimer = setTimeout(function() { postMobile(false); }, 320);   /* 내려간 뒤 버튼 크기로 */
+    }
+  }
+
   function checkMobile() {
     if (window.screen.width <= 768) {
       document.body.classList.add('mobile');
     } else {
       document.body.classList.remove('mobile');
-      state.mobilePanelOpen = false;
-      el.mobPanel.classList.remove('open');
+      setMobilePanel(false);
     }
   }
 
@@ -1512,9 +1547,13 @@
         e.target !== el.mobToggle &&
         !el.mobToggle.contains(e.target)
       ) {
-        state.mobilePanelOpen = false;
-        el.mobPanel.classList.remove('open');
+        setMobilePanel(false);
       }
+    });
+
+    /* 패널 위쪽 손잡이를 누르면 닫기 */
+    document.getElementById('mob-handle').addEventListener('click', function() {
+      setMobilePanel(false);
     });
 
     /*
@@ -1545,8 +1584,7 @@
     */
     el.mobToggle.addEventListener('click', function(e) {
       e.stopPropagation();
-      state.mobilePanelOpen = !state.mobilePanelOpen;
-      el.mobPanel.classList.toggle('open', state.mobilePanelOpen);
+      setMobilePanel(!state.mobilePanelOpen);
     });
 
     /*
@@ -1626,6 +1664,26 @@
     loadTrack(0);
     checkMobile();
     notifyHeight(desiredHeight());
+
+    /* v1.1: 실제 높이가 바뀔 때마다 다시 알림 (PC: 보이는 순간, 글꼴 로드 후 등) */
+    var lastSent = 0;
+    function syncHeight() {
+      var h = desiredHeight();
+      if (h && h !== lastSent) { lastSent = h; notifyHeight(h); }
+    }
+    if (window.ResizeObserver) new ResizeObserver(syncHeight).observe(document.getElementById('mjp'));
+    window.addEventListener('resize', syncHeight);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeight);
+
+    /* 모바일: 패널 크기가 바뀌면(폭이 넓어진 직후 등) 정확한 높이를 다시 알림 */
+    if (window.ResizeObserver) new ResizeObserver(function() {
+      if (state.mobilePanelOpen) postMobile(true);
+    }).observe(el.mobPanel);
+    /* 모바일: 스킨이 "바깥을 눌렀다"고 알려 주면 패널 닫기 */
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'bgm-mobile-close' && state.mobilePanelOpen) setMobilePanel(false);
+    });
+    postMobile(false);
   }
 
   init();
@@ -1639,7 +1697,7 @@
       window.MJ_BGM_TT.resolveUrl('test.m4a')
   */
   window.MJ_BGM_TT = {
-    version: '1.0',
+    version: '1.1',
     baseUrl: BASE_URL,
     tracks: state.tracks,
     resolveUrl: resolveUrl

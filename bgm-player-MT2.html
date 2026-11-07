@@ -7,7 +7,8 @@
 
 <!--
   ════════════════════════════════════════════════════════════
-  MJ BGM Player — MT2 (Multi-Track 2nd) Version v2.0.2
+  MJ BGM Player — MT2 (Multi-Track 2nd) Version v2.0.3
+  v2.0.3: 모바일에서 투명 iframe이 본문 터치를 막던 문제 수정 (버튼 크기로 줄였다가 패널 열 때만 펼침)
   v2.0.1: 두 번째 커버 레이어에 크기 지정 누락 → 큰 이미지가 잘려 보이던 문제 수정
   v2.0.2: 높이 알림 보강 — 숨김 상태의 0 높이는 보내지 않고, 보이는 순간·곡명 줄바꿈 시 다시 알림
   기반: bgm-player-MT.html v1.1  (MT는 그대로 두고 새 파일로 분리)
@@ -602,8 +603,8 @@
 
   body.mobile #mob-toggle {
     position: fixed;
-    right: 18px;
-    bottom: 72px;
+    right: 12px;      /* 모바일: iframe이 버튼 크기(72px)로 줄어들므로 안쪽 여백만 둠 */
+    bottom: 12px;
     display: flex;
     width: 48px;
     height: 48px;
@@ -721,7 +722,7 @@
   #mob-tracklist {
     display: none;
     margin: 12px -18px 0;
-    max-height: 40vh;
+    max-height: 240px;   /* iframe 안의 vh는 iframe 높이 기준이라 고정값 사용 */
     overflow-y: auto;
     border-top: 1px solid var(--line);
     padding-top: 4px;
@@ -1154,6 +1155,7 @@
   function notifyHeight(height) {
     /* v2.0.2: 플레이어가 아직 숨겨져 있을 때(스크롤 전)는 높이가 0으로 재어짐 → 보내지 않음 */
     if (!height) return;
+    if (document.body.classList.contains('mobile')) return;   /* 모바일은 bgm-mobile 메시지로 처리 */
     window.parent.postMessage({ type: 'bgm-resize', height: height }, '*');
   }
 
@@ -1741,11 +1743,28 @@
     모바일 여부를 판단합니다.
   */
   /* v1.1: 모바일 패널 열기/닫기 (플로팅 버튼 표시도 함께 관리) */
-  function setMobilePanel(open) {
-    state.mobilePanelOpen = !!open;
-    el.mobPanel.classList.toggle('open', state.mobilePanelOpen);
-    document.body.classList.toggle('panel-open', state.mobilePanelOpen);
+  /* ── 모바일: 부모(스킨)에 "버튼만 / 패널 열림" 상태 알림 (투명 iframe이 본문 터치를 막지 않도록) ── */
+  var mobTimer = null;
+  function isMobileMode() { return document.body.classList.contains('mobile'); }
+  function postMobile(open) {
+    if (!isMobileMode()) return;
+    var h = open ? Math.ceil(el.mobPanel.getBoundingClientRect().height) : 0;
+    window.parent.postMessage({ type: 'bgm-mobile', open: !!open, height: h }, '*');
   }
+  function setMobilePanel(open) {
+    open = !!open;
+    state.mobilePanelOpen = open;
+    clearTimeout(mobTimer);
+    document.body.classList.toggle('panel-open', open);
+    if (open) {
+      postMobile(true);                       /* 부모가 iframe을 먼저 화면 폭으로 넓힘 */
+      mobTimer = setTimeout(function() { el.mobPanel.classList.add('open'); }, 60);
+    } else {
+      el.mobPanel.classList.remove('open');
+      mobTimer = setTimeout(function() { postMobile(false); }, 320);   /* 내려간 뒤 버튼 크기로 */
+    }
+  }
+
 
   function checkMobile() {
     if (window.screen.width <= 768) {
@@ -2005,6 +2024,17 @@
     if (window.ResizeObserver) new ResizeObserver(syncHeight).observe(document.getElementById('mjp'));
     window.addEventListener('resize', syncHeight);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeight);
+
+    /* 모바일: 패널 크기가 바뀌면(폭이 넓어진 직후 등) 정확한 높이를 다시 알림 */
+    if (window.ResizeObserver) new ResizeObserver(function() {
+      if (state.mobilePanelOpen) postMobile(true);
+    }).observe(el.mobPanel);
+    /* 모바일: 스킨이 "바깥을 눌렀다"고 알려 주면 패널 닫기 */
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'bgm-mobile-close' && state.mobilePanelOpen) setMobilePanel(false);
+    });
+    postMobile(false);
+
   }
 
   init();
@@ -2018,7 +2048,7 @@
       window.MJ_BGM_MT.resolveUrl('test.m4a')
   */
   window.MJ_BGM_MT = {
-    version: '2.0.2 (MT2)',
+    version: '2.0.3 (MT2)',
     baseUrl: BASE_URL,
     tracks: state.tracks,
     state: state,
