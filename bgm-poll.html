@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BGM Poll</title>
+<title>MJ BGM Poll</title>
 
 <!--
   ════════════════════════════════════════════════════════════
-  MJ BGM Poll v1.0 — 포스트 안의 BGM 선호도 투표
+  MJ BGM Poll v1.2 — 포스트 안의 BGM 선호도 투표
+  v1.2: 곡명이 길어도 '내 선택' 표시가 잘리지 않도록 별도 칸으로 분리,
+        제목 'MJ BGM POLL', 끝인사 문구를 FOOT_TEXT 한 곳에서 관리
   작성: Hanrim (Cozy Shelter)
   작성일: 2026-11-03
   ────────────────────────────────────────────────────────────
@@ -27,6 +29,10 @@
 
     - post : 티스토리 포스트 번호 (글마다 투표가 따로 집계됨) — 필수
     - q    : 질문 문구 (선택, 비우면 DEFAULT_QUESTION)
+    - all  : (선택, v1.1) 곡 목록 끝에 '모두 좋아요' 선택지를 추가
+             all=1 → 2곡이면 '둘 다 좋아요', 3곡 이상이면 '모두 좋아요'
+             all=문구 → 그 문구를 그대로 사용 (예: all=다 좋아서 못 고르겠어요)
+             서버(poll-api.gs)는 그대로 둡니다. 이 선택지는 마지막 번호로 집계됩니다.
     - data : 반드시 맨 마지막에. 플레이어 data를 그대로 복사
     - 티스토리 에디터가 & 를 &amp; 로 바꿔도 정상 동작합니다.
 
@@ -128,6 +134,9 @@
     text-align: right;
   }
   .opt-meta  { min-width: 0; }
+  .opt-all { background: transparent; border-style: dashed; }
+  .opt-all .opt-num { font-size: 13px; color: var(--latte); letter-spacing: 0; }
+  .opt-all .opt-title { font-family: 'Playfair Display', serif; font-style: italic; color: var(--coffee2); }
   .opt-title {
     display: block;
     font-size: 14px;
@@ -198,7 +207,7 @@
 
   .lg-row {
     display: grid;
-    grid-template-columns: 10px 1fr auto;
+    grid-template-columns: 10px minmax(0, 1fr) auto 44px;   /* 점 | 곡명(말줄임) | 내 선택 | % (고정폭 → 줄 맞춤) */
     align-items: center;
     gap: 9px;
   }
@@ -208,9 +217,12 @@
     line-height: 1.3;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  .lg-mine:empty { padding: 0; margin-left: -9px; }   /* 빈 칸은 폭 0 (gap만큼 당김) */
+  .lg-pct { text-align: right; }
+  .lg-row.mine .lg-name { font-weight: 700; }
   .lg-mine {
     display: inline-block;
-    margin-left: 5px;
+    white-space: nowrap;
     padding: 1px 6px;
     border-radius: 99px;
     background: rgba(122,85,69,.12);
@@ -266,7 +278,7 @@
 <body>
 
 <div id="poll" aria-live="polite">
-  <div class="eyebrow">BGM POLL</div>
+  <div class="eyebrow">MJ BGM POLL</div>
   <h2 id="question"></h2>
 
   <!-- 투표 화면 -->
@@ -302,6 +314,14 @@
 
   var STORE_PREFIX = 'mj-bgm-poll:';
 
+  /* 결과 화면 끝인사 (문구를 바꾸려면 여기만) */
+  var FOOT_TEXT = '함께해 주셔서 고맙습니다';
+
+  /* v1.1: '모두 좋아요' 선택지 */
+  var ALL_LABEL_TWO  = '둘 다 좋아요';
+  var ALL_LABEL_MANY = '모두 좋아요';
+  var ALL_COLOR      = '#b7aa9c';
+
   /* ════════════════════════════════════════════════════════════
      2. DOM / State
      ════════════════════════════════════════════════════════════ */
@@ -316,7 +336,8 @@
     msg:      document.getElementById('msg')
   };
 
-  var state = { post: '', tracks: [], selected: -1, mine: -1, busy: false };
+  /* tracks: 곡 목록 / options: 화면 선택지 (곡 + '모두 좋아요') */
+  var state = { post: '', tracks: [], options: [], selected: -1, mine: -1, busy: false };
 
   /* ════════════════════════════════════════════════════════════
      3. Utility
@@ -383,7 +404,7 @@
       return m ? safeDecode(m[1].replace(/\+/g, ' ')).trim() : '';
     }
 
-    return { post: param('post'), q: param('q'), tracks: parseTracks(data) };
+    return { post: param('post'), q: param('q'), all: param('all'), tracks: parseTracks(data) };
   }
 
   function parseTracks(raw) {
@@ -422,14 +443,14 @@
   function renderBallot() {
     el.options.innerHTML = '';
 
-    state.tracks.forEach(function(t, i) {
+    state.options.forEach(function(t, i) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'opt';
+      b.className = 'opt' + (t.extra ? ' opt-all' : '');
       b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', 'false');
       b.innerHTML =
-        '<span class="opt-num">' + String(i + 1).padStart(2, '0') + '</span>' +
+        '<span class="opt-num">' + (t.extra ? '♡' : String(i + 1).padStart(2, '0')) + '</span>' +
         '<span class="opt-meta">' +
           '<span class="opt-title">' + escapeHtml(t.title) + '</span>' +
           (t.artist ? '<span class="opt-artist">' + escapeHtml(t.artist) + '</span>' : '') +
@@ -459,7 +480,7 @@
     el.result.classList.add('show');
 
     var mine = state.mine;
-    var mineName = mine >= 0 && state.tracks[mine] ? state.tracks[mine].title : '';
+    var mineName = mine >= 0 && state.options[mine] ? state.options[mine].title : '';
 
     if (!data.ready) {
       el.result.innerHTML =
@@ -467,7 +488,7 @@
           (mineName ? '<strong>' + escapeHtml(mineName) + '</strong>에 한 표를 주셨어요.<br>' : '') +
           '아직 결과를 모으는 중이에요.<br>조금 더 모이면 비율이 공개돼요.' +
         '</div>' +
-        '<div class="foot">함께해 주셔서 고맙습니다</div>';
+        '<div class="foot">' + FOOT_TEXT + '</div>';
       notifyHeight();
       return;
     }
@@ -478,7 +499,8 @@
     var offset  = 0;
 
     data.pct.forEach(function(p, i) {
-      var color = COLORS[i % COLORS.length];
+      var opt   = state.options[i];
+      var color = opt && opt.extra ? ALL_COLOR : COLORS[i % COLORS.length];
       var len   = C * p / 100;
 
       if (p > 0) {
@@ -490,11 +512,10 @@
       offset += len;
 
       legend +=
-        '<div class="lg-row">' +
+        '<div class="lg-row' + (i === mine ? ' mine' : '') + '">' +
           '<span class="lg-dot" style="background:' + color + '"></span>' +
-          '<span class="lg-name">' + escapeHtml(state.tracks[i] ? state.tracks[i].title : '') +
-            (i === mine ? '<span class="lg-mine">내 선택</span>' : '') +
-          '</span>' +
+          '<span class="lg-name" title="' + escapeHtml(opt ? opt.title : '') + '">' + escapeHtml(opt ? opt.title : '') + '</span>' +
+          '<span class="lg-mine">' + (i === mine ? '내 선택' : '') + '</span>' +
           '<span class="lg-pct">' + p + '%</span>' +
         '</div>';
     });
@@ -507,7 +528,7 @@
         '</svg>' +
         '<div class="legend">' + legend + '</div>' +
       '</div>' +
-      '<div class="foot">함께해 주셔서 고맙습니다</div>';
+      '<div class="foot">' + FOOT_TEXT + '</div>';
 
     notifyHeight();
 
@@ -527,7 +548,7 @@
 
   function loadResults() {
     setMsg('');
-    api({ action: 'results', post: state.post, n: state.tracks.length })
+    api({ action: 'results', post: state.post, n: state.options.length })
       .then(renderResult)
       .catch(function() { setMsg('결과를 불러오지 못했어요. 잠시 후 다시 들러 주세요.'); });
   }
@@ -542,7 +563,7 @@
     api({
       action: 'vote',
       post:   state.post,
-      n:      state.tracks.length,
+      n:      state.options.length,
       choice: state.selected,
       voter:  voterId()
     })
@@ -567,6 +588,13 @@
     var cfg = parseUrl();
     state.post   = cfg.post;
     state.tracks = cfg.tracks;
+    state.options = state.tracks.slice();
+    if (cfg.all && state.tracks.length >= 2) {
+      var label = (cfg.all === '1' || /^true$/i.test(cfg.all))
+        ? (state.tracks.length === 2 ? ALL_LABEL_TWO : ALL_LABEL_MANY)
+        : cfg.all;
+      state.options.push({ title: label, artist: '', extra: true });
+    }
 
     /* 1곡 이하면 표시하지 않음 */
     if (state.tracks.length < 2) { notifyHeight(); return; }
@@ -605,7 +633,7 @@
 
   init();
 
-  window.MJ_BGM_POLL = { version: '1.0', state: state };
+  window.MJ_BGM_POLL = { version: '1.2', state: state };
 })();
 </script>
 
